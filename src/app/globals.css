@@ -1,26 +1,166 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink: #111111;
+  --color-paper: #f2efe6;
+  --color-lime: #a3e635;
+  --color-violet: #7c3aed;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f2efe6;
+  --foreground: #111111;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ===== Neo-brutalist helpers ===== */
+
+.card-brutal {
+  border: 2px solid var(--color-ink);
+  background: #ffffff;
+  box-shadow: 4px 4px 0 0 var(--color-ink);
+}
+
+.btn-brutal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid var(--color-ink);
+  background: var(--color-lime);
+  color: var(--color-ink);
+  font-weight: 700;
+  padding: 0.5rem 1.1rem;
+  box-shadow: 3px 3px 0 0 var(--color-ink);
+  transition:
+    transform 100ms,
+    box-shadow 100ms;
+  cursor: pointer;
+}
+
+.btn-brutal:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 0 var(--color-ink);
+}
+
+.btn-brutal:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.btn-brutal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 3px 3px 0 0 var(--color-ink);
+}
+
+.btn-brutal-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  box-shadow: 2px 2px 0 0 var(--color-ink);
+}
+
+.btn-brutal-secondary {
+  background: #ffffff;
+  color: var(--color-ink);
+}
+
+.btn-brutal-violet {
+  background: var(--color-violet);
+  color: #ffffff;
+}
+
+.btn-brutal-danger {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.btn-brutal-amber {
+  background: #fbbf24;
+  color: var(--color-ink);
+}
+
+.form-input {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  border: 2px solid var(--color-ink);
+  background: #ffffff;
+  padding: 0.55rem 0.75rem;
+  color: var(--color-ink);
+  outline: none;
+  transition: box-shadow 100ms;
+}
+
+.form-input:focus {
+  box-shadow: 3px 3px 0 0 var(--color-ink);
+}
+
+.chip-brutal {
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid var(--color-ink);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.link-brutal {
+  font-weight: 700;
+  color: var(--color-violet);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.link-brutal:hover {
+  color: var(--color-ink);
+}
+
+.seg-brutal {
+  display: grid;
+  border: 2px solid var(--color-ink);
+  background: #ffffff;
+}
+
+.seg-brutal-item {
+  padding: 0.5rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #44403c;
+  border: none;
+  cursor: pointer;
+  transition: background 100ms;
+}
+
+.seg-brutal-item + .seg-brutal-item {
+  border-left: 2px solid var(--color-ink);
+}
+
+.seg-brutal-item.active {
+  background: var(--color-lime);
+  color: var(--color-ink);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 300ms ease-out both;
 }
