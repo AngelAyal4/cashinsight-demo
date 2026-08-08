@@ -1,11 +1,13 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
 import { AvatarIcon, avatarIds } from '@/components/avatar/avatar-icon';
 import type { AvatarId, CurrencyCode, IFinancialProfile } from '@/types';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<IFinancialProfile | null>(null);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState<AvatarId>('ren');
@@ -18,6 +20,10 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -145,6 +151,40 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleLogout(): Promise<void> {
+    setLoggingOut(true);
+
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Sin cookie, el proxy redirige a /login de todos modos.
+    } finally {
+      router.replace('/login');
+      router.refresh();
+    }
+  }
+
+  async function handleDeleteAccount(): Promise<void> {
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch('/api/auth/account', { method: 'DELETE' });
+
+      if (!response.ok) {
+        setDeleteError('No se pudo eliminar la cuenta. Intentá de nuevo.');
+        setDeleting(false);
+        return;
+      }
+
+      router.replace('/login');
+      router.refresh();
+    } catch {
+      setDeleteError('No se pudo eliminar la cuenta. Intentá de nuevo.');
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-paper text-ink">
       <AppHeader />
@@ -156,7 +196,7 @@ export default function ProfilePage() {
           <div className="mt-8 h-72 animate-pulse bg-ink/10" />
         ) : profile ? (
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-            <form onSubmit={handleSubmit} className="card-brutal animate-fade-in space-y-5 p-6">
+            <form onSubmit={handleSubmit} className="card-brutal animate-fade-in h-full space-y-5 p-6">
               <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-5">
                 <button
                   type="button"
@@ -277,10 +317,31 @@ export default function ProfilePage() {
                   <span className="text-xs font-medium text-ink/60">Enter también guarda.</span>
                 </div>
               </div>
+              <div className="border-t-2 border-ink pt-5">
+                <button
+                  type="button"
+                  onClick={() => void handleLogout()}
+                  disabled={loggingOut}
+                  className="btn-brutal btn-brutal-danger w-full"
+                >
+                  {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setConfirmingDelete(true);
+                  }}
+                  disabled={deleting}
+                  className="mt-3 w-full border border-ink/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-ink/50 transition hover:border-rose-600 hover:text-rose-600"
+                >
+                  Eliminar cuenta
+                </button>
+              </div>
             </form>
-            <aside className="card-brutal animate-fade-in h-fit p-6" style={{ animationDelay: '100ms' }}>
+<aside className="card-brutal animate-fade-in flex h-full flex-col p-6" style={{ animationDelay: '100ms' }}>
               <h2 className="text-lg font-extrabold uppercase tracking-tight">Recomendaciones</h2>
-              <ul className="mt-4 space-y-4 text-sm font-medium text-ink/80">
+              <ul className="mt-4 flex-1 space-y-4 text-sm font-medium text-ink/80">
                 <li className="flex gap-2">
                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
                   Registrá los gastos del día para que el puntaje refleje tu situación real.
@@ -291,11 +352,39 @@ export default function ProfilePage() {
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Prioriza tus ahorros como un gasto fijo más para ser constante con tus metas.
+                  Priorizá tus ahorros como un gasto fijo más para ser constante con tus metas.
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
                   Revisá tus metas al cierre de cada mes y ajustá prioridades si cambió tu ingreso.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                  Aplicá la regla 50/30/20: la mitad a necesidades, 30% a deseos y 20% a ahorro.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                  Apuntá a un fondo de emergencia de 3 a 6 meses de tus gastos fijos.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                  Revisá cada mes tus suscripciones y bajá las que ya no usás.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                  Pagá primero las deudas con mayor interés y evitá nuevos consumos con tarjeta.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                  Anotá también los montos chicos: un café por día se acumula en el mes.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                  Compará cada cierre de mes lo presupuestado contra lo gastado para ajustar prioridades.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                  Mantené actualizados tus ingresos y gastos fijos para que el puntaje sea fiel a tu realidad.
                 </li>
               </ul>
             </aside>
@@ -347,6 +436,48 @@ export default function ProfilePage() {
                   <AvatarIcon id={id} className="h-16 w-16" />
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {confirmingDelete ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmar eliminación de cuenta"
+        >
+          <div className="card-brutal w-full max-w-md p-5 sm:p-6">
+            <h2 className="text-xl font-extrabold uppercase tracking-tight text-ink">
+              ¿Eliminar tu cuenta?
+            </h2>
+            <p className="mt-3 text-sm font-medium text-ink/70">
+              Se borrarán tu cuenta, perfil, transacciones, categorías y
+              metas. Esta acción no se puede deshacer.
+            </p>
+            {deleteError ? (
+              <p role="alert" className="mt-3 border-2 border-rose-600 bg-rose-50 p-3 font-semibold text-rose-700">
+                {deleteError}
+              </p>
+            ) : null}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                className="btn-brutal btn-brutal-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteAccount()}
+                disabled={deleting}
+                className="btn-brutal btn-brutal-danger"
+              >
+                {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
             </div>
           </div>
         </div>
