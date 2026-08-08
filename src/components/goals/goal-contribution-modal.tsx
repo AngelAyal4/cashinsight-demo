@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
+import { MoneyInput } from '@/components/ui/money-input';
 import { formatCurrency } from '@/lib/format';
 import type { GoalProgress } from '@/types';
 
@@ -112,12 +113,11 @@ export function GoalContributionModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-bold text-ink">
             Monto
-            <input
+            <MoneyInput
               required
-              min="0.01"
-              type="number"
-              value={amount || ''}
-              onChange={(event) => setAmount(Number(event.target.value))}
+              min={0.01}
+              value={amount}
+              onChange={setAmount}
               className="form-input"
             />
           </label>

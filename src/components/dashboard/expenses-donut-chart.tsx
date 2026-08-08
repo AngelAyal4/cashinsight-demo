@@ -11,6 +11,9 @@ const iconByName: Record<string, string> = {
   Ocio: 'film',
   Salud: 'heart',
   Servicios: 'bolt',
+  Impuesto: 'receipt',
+  Tarjeta: 'card',
+  Prestamos: 'banknote',
   Otro: 'dots',
   Sueldo: 'briefcase',
   Freelance: 'laptop',
@@ -44,7 +47,7 @@ export function ExpensesDonutChart({ data, loading, className }: ExpensesDonutCh
           </div>
         ) : (
           <div className="h-full w-full" aria-label="Gráfico de distribución del ingreso">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 420, height: 320 }}>
               <PieChart>
                 <Pie
                   data={data}

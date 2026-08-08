@@ -66,6 +66,13 @@ body {
   box-shadow: 2px 2px 0 0 var(--color-ink);
 }
 
+.btn-brutal-xs {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  box-shadow: 2px 2px 0 0 var(--color-ink);
+}
+
 .btn-brutal-secondary {
   background: #ffffff;
   color: var(--color-ink);
@@ -162,5 +169,5 @@ body {
 }
 
 .animate-fade-in {
-  animation: fade-in 300ms ease-out both;
+  animation: fade-in 333ms ease-out both;
 }

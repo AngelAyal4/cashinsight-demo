@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MoneyInput } from '@/components/ui/money-input';
 import type { CurrencyCode, GoalPriority, GoalType, IncomeAccuracy } from '@/types';
 import { formatCurrency } from '@/lib/format';
 
 interface GoalDraft {
   name: string;
-  goalType: Exclude<GoalType, 'emergency'>;
+  goalType: Exclude<GoalType, 'emergency' | 'home'>;
   targetAmount: number;
   currency: CurrencyCode;
   deadline: string;
@@ -16,7 +17,6 @@ interface GoalDraft {
 }
 
 const goalTypeLabels: Record<GoalDraft['goalType'], string> = {
-  home: 'Casa',
   car: 'Auto',
   retirement: 'Retiro',
   travel: 'Viaje',
@@ -117,17 +117,17 @@ export default function OnboardingPage() {
         <Link href="/" className="link-brutal">
           ← Volver al resumen
         </Link>
-        <div className="mt-8 max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-wider text-lime">Primer paso</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Armemos tu plan financiero</h1>
-          <p className="mt-3 text-sm font-medium text-ink/70">
-            Con tus ingresos, gastos estimados y objetivos vamos a calcular cuánto podés
-            destinar al ahorro sin perder visibilidad sobre tus gastos.
-          </p>
-        </div>
+<div className="animate-fade-in mt-8 max-w-2xl">
+            <p className="text-sm font-bold uppercase tracking-wider text-lime">Primer paso</p>
+            <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Armemos tu plan financiero</h1>
+            <p className="mt-3 text-sm font-medium text-ink/70">
+              Con tus ingresos, gastos estimados y objetivos vamos a calcular cuánto podés
+              destinar al ahorro sin perder visibilidad sobre tus gastos.
+            </p>
+          </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <section className="card-brutal p-5 sm:p-6">
+          <section className="card-brutal animate-fade-in p-5 sm:p-6">
             <h2 className="text-lg font-extrabold uppercase tracking-tight">Tu situación actual</h2>
             <div className="mt-5 grid gap-5 sm:grid-cols-2">
               <label className="block text-sm font-bold text-ink">
@@ -142,12 +142,11 @@ export default function OnboardingPage() {
               </label>
               <label className="block text-sm font-bold text-ink">
                 Ingreso mensual
-                <input
+                <MoneyInput
                   required
-                  min="0.01"
-                  type="number"
-                  value={monthlyIncome || ''}
-                  onChange={(event) => setMonthlyIncome(Number(event.target.value))}
+                  min={0.01}
+                  value={monthlyIncome}
+                  onChange={setMonthlyIncome}
                   className="form-input"
                   placeholder="Ej. 150000"
                 />
@@ -183,22 +182,20 @@ export default function OnboardingPage() {
               </label>
               <label className="block text-sm font-bold text-ink">
                 Gastos fijos mensuales
-                <input
-                  min="0"
-                  type="number"
-                  value={fixedExpenses || ''}
-                  onChange={(event) => setFixedExpenses(Number(event.target.value))}
+                <MoneyInput
+                  min={0}
+                  value={fixedExpenses}
+                  onChange={setFixedExpenses}
                   className="form-input"
                   placeholder="Alquiler, servicios, cuotas..."
                 />
               </label>
               <label className="block text-sm font-bold text-ink">
                 Gastos variables estimados
-                <input
-                  min="0"
-                  type="number"
-                  value={variableExpenses || ''}
-                  onChange={(event) => setVariableExpenses(Number(event.target.value))}
+                <MoneyInput
+                  min={0}
+                  value={variableExpenses}
+                  onChange={setVariableExpenses}
                   className="form-input"
                   placeholder="Comida, transporte, ocio..."
                 />
@@ -213,7 +210,7 @@ export default function OnboardingPage() {
             </div>
           </section>
 
-          <section className="card-brutal p-5 sm:p-6">
+          <section className="card-brutal animate-fade-in p-5 sm:p-6" style={{ animationDelay: '100ms' }}>
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
               <div>
                 <h2 className="text-lg font-extrabold uppercase tracking-tight">Tus metas</h2>
@@ -223,12 +220,12 @@ export default function OnboardingPage() {
               </div>
               <label className="text-sm font-bold text-ink">
                 Meses de emergencia
-                <input
-                  min="1"
-                  max="24"
-                  type="number"
+                <MoneyInput
+                  required
+                  min={1}
+                  max={24}
                   value={emergencyFundMonths}
-                  onChange={(event) => setEmergencyFundMonths(Number(event.target.value))}
+                  onChange={setEmergencyFundMonths}
                   className="form-input w-28"
                 />
               </label>
@@ -280,14 +277,11 @@ export default function OnboardingPage() {
                     </label>
                     <label className="block text-sm font-bold text-ink">
                       Monto objetivo
-                      <input
+                      <MoneyInput
                         required
-                        min="0.01"
-                        type="number"
-                        value={goal.targetAmount || ''}
-                        onChange={(event) =>
-                          updateGoal(index, { targetAmount: Number(event.target.value) })
-                        }
+                        min={0.01}
+                        value={goal.targetAmount}
+                        onChange={(value) => updateGoal(index, { targetAmount: value })}
                         className="form-input"
                       />
                     </label>

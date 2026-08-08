@@ -40,7 +40,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <AppHeader />
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-bold uppercase tracking-wider text-lime">Principal</p>
@@ -48,13 +48,6 @@ export default function Home() {
               Tu dinero, de un vistazo
             </h1>
           </div>
-          <button
-            type="button"
-            onClick={() => openModal(null)}
-            className="btn-brutal"
-          >
-            Nuevo movimiento
-          </button>
         </div>
 
         {error ? (
@@ -105,6 +98,13 @@ export default function Home() {
                   loading={loading}
                 />
               </div>
+              <button
+                type="button"
+                onClick={() => openModal(null)}
+                className="btn-brutal w-full whitespace-nowrap sm:absolute sm:right-6 sm:top-12 sm:w-auto lg:right-8"
+              >
+                Nuevo movimiento
+              </button>
               <div className="flex flex-col gap-4">
                 {data ? (
                   <>

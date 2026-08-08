@@ -26,10 +26,10 @@ function GoalProgressChart({ goal }: { goal: GoalProgress }) {
 
   return (
     <div
-      className="h-40 w-40 shrink-0"
+      className="relative h-32 w-32 shrink-0 sm:h-40 sm:w-40"
       aria-label={`${goal.name}: ${goal.progressPercentage}% completado`}
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 160, height: 160 }}>
         <PieChart>
           <Pie
             data={[{ value: goal.currentAmount }, { value: remainingAmount }]}
@@ -47,7 +47,7 @@ function GoalProgressChart({ goal }: { goal: GoalProgress }) {
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      <p className="-mt-24 text-center text-xl font-extrabold text-ink">
+      <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-xl font-extrabold text-ink">
         {goal.progressPercentage.toFixed(0)}%
       </p>
     </div>
@@ -64,10 +64,17 @@ function GoalCard({
   onDelete: (goal: GoalProgress) => void;
 }) {
   return (
-    <div className="card-brutal p-5">
-      <div className="flex items-center gap-4">
-        <GoalProgressChart goal={goal} />
-        <div className="min-w-0">
+    <div className="card-brutal animate-fade-in p-5">
+      <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
+        <div className="flex flex-col items-center gap-2">
+          <GoalProgressChart goal={goal} />
+          {goal.isEmergency ? (
+            <p className="hidden text-xs font-bold uppercase tracking-wide text-ink sm:block">
+              <span className="chip-brutal bg-amber-400 text-ink">Meta predefinida</span>
+            </p>
+          ) : null}
+        </div>
+        <div className="flex w-full min-w-0 flex-1 flex-col items-center sm:items-start">
           <div className="flex items-center gap-2">
             <span
               className="flex h-7 w-7 shrink-0 items-center justify-center border-2 border-ink bg-lime text-ink"
@@ -76,9 +83,6 @@ function GoalCard({
               <CategoryIcon name={goalTypeIcons[goal.goalType]} className="h-4 w-4" />
             </span>
             <h2 className="truncate text-lg font-extrabold text-ink">{goal.name}</h2>
-            {goal.isEmergency ? (
-              <span className="chip-brutal bg-amber-400 text-ink">Automática</span>
-            ) : null}
           </div>
           <p className="mt-1 text-sm font-medium text-ink/70">
             {formatCurrency(goal.currentAmount, goal.currency)} de{' '}
@@ -92,7 +96,7 @@ function GoalCard({
           ) : (
             <p className="mt-1 text-xs font-medium text-ink/60">Sin fecha límite</p>
           )}
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
             <button
               type="button"
               onClick={() => onWithdraw(goal)}
@@ -111,6 +115,11 @@ function GoalCard({
           </div>
         </div>
       </div>
+      {goal.isEmergency ? (
+        <p className="mt-4 text-center text-xs font-bold uppercase tracking-wide text-ink sm:hidden">
+          <span className="chip-brutal bg-amber-400 text-ink">Meta predefinida</span>
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -4,6 +4,13 @@ export type CurrencyCode = 'ARS' | 'USD' | 'EUR';
 export type TransactionType = 'income' | 'expense';
 export type TransactionKind = TransactionType | 'saving' | 'withdrawal';
 export type IncomeAccuracy = 'approximate' | 'exact';
+export type AvatarId =
+  | 'bruno'
+  | 'mateo'
+  | 'clara'
+  | 'lucía'
+  | 'ren'
+  | 'max';
 export type GoalPriority = 'high' | 'medium' | 'low';
 export type GoalType =
   | 'emergency'
@@ -105,7 +112,8 @@ export interface IFinancialProfile {
   emergencyFundMonths: number;
   baseCurrency: CurrencyCode;
   savingsCurrency: CurrencyCode;
-  uiColor: string;
+  avatar?: AvatarId;
+  hasPassword?: boolean;
   onboardingCompleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;

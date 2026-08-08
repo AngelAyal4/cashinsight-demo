@@ -7,7 +7,7 @@ import { SavingsGoal } from '@/models/SavingsGoal';
 
 const onboardingGoalSchema = z.object({
   name: z.string().trim().min(1, 'El nombre de la meta es obligatorio').max(100),
-  goalType: z.enum(['home', 'car', 'retirement', 'travel', 'custom']),
+  goalType: z.enum(['car', 'retirement', 'travel', 'custom']),
   targetAmount: z.number().positive('El monto objetivo debe ser mayor a cero'),
   currency: z.enum(['ARS', 'USD', 'EUR']).optional(),
   deadline: z
@@ -28,10 +28,6 @@ const onboardingSchema = z.object({
   emergencyFundMonths: z.number().int().min(1).max(24).default(3),
   baseCurrency: z.enum(['ARS', 'USD', 'EUR']),
   savingsCurrency: z.enum(['ARS', 'USD', 'EUR']),
-  uiColor: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, 'El color debe estar en formato hexadecimal')
-    .default('#4f46e5'),
   goals: z.array(onboardingGoalSchema).min(1, 'Agregá al menos una meta').max(10),
 });
 
@@ -67,6 +63,7 @@ export async function POST(request: Request) {
       plan.monthlyExpenses * data.emergencyFundMonths,
       data.monthlyIncome * 0.25
     );
+    const retirementTarget = data.monthlyIncome * 12;
 
     const profile = await FinancialProfile.findOneAndUpdate(
       {},
@@ -79,7 +76,6 @@ export async function POST(request: Request) {
         emergencyFundMonths: data.emergencyFundMonths,
         baseCurrency: data.baseCurrency,
         savingsCurrency: data.savingsCurrency,
-        uiColor: data.uiColor,
         onboardingCompleted: true,
       },
       { new: true, upsert: true, runValidators: true }
@@ -94,6 +90,16 @@ export async function POST(request: Request) {
         currency: data.baseCurrency,
         priority: 'high',
         isEmergency: true,
+        plannedMonthlyAmount: 0,
+        active: true,
+      },
+      {
+        name: 'Fondo de retiro',
+        goalType: 'retirement',
+        targetAmount: retirementTarget,
+        currency: data.savingsCurrency,
+        priority: 'high',
+        isEmergency: false,
         plannedMonthlyAmount: 0,
         active: true,
       },

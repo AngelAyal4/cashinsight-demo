@@ -89,6 +89,26 @@ const iconElements: Record<string, JSX.Element> = {
       <path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6" />
     </>
   ),
+  receipt: (
+    <>
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z" />
+      <line x1="16" y1="8" x2="8" y2="8" />
+      <line x1="16" y1="12" x2="8" y2="12" />
+    </>
+  ),
+  card: (
+    <>
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+    </>
+  ),
+  banknote: (
+    <>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M6 12h.01M18 12h.01" />
+    </>
+  ),
 };
 
 export function CategoryIcon({ name, className }: CategoryIconProps) {

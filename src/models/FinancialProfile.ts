@@ -3,7 +3,10 @@ import { IFinancialProfile } from '@/types';
 
 export interface IFinancialProfileDocument
   extends Omit<IFinancialProfile, '_id'>,
-    Document {}
+    Document {
+  passwordHash?: string;
+  passwordSalt?: string;
+}
 
 const financialProfileSchema = new Schema<IFinancialProfileDocument>(
   {
@@ -50,10 +53,18 @@ const financialProfileSchema = new Schema<IFinancialProfileDocument>(
       enum: ['ARS', 'USD', 'EUR'],
       required: true,
     },
-    uiColor: {
+    avatar: {
       type: String,
-      match: /^#[0-9A-Fa-f]{6}$/,
-      default: '#4f46e5',
+      enum: ['bruno', 'mateo', 'clara', 'lucía', 'ren', 'max'],
+      default: 'ren',
+    },
+    passwordHash: {
+      type: String,
+      select: false,
+    },
+    passwordSalt: {
+      type: String,
+      select: false,
     },
     onboardingCompleted: {
       type: Boolean,

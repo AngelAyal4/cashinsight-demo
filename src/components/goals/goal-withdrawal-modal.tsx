@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
+import { MoneyInput } from '@/components/ui/money-input';
 import { formatCurrency } from '@/lib/format';
 import type { GoalProgress } from '@/types';
 
@@ -83,13 +84,12 @@ export function GoalWithdrawalModal({
         </div>
         <label className="block text-sm font-bold text-ink">
           Monto a retirar
-          <input
+          <MoneyInput
             required
-            min="0.01"
+            min={0.01}
             max={goal.currentAmount}
-            type="number"
-            value={amount || ''}
-            onChange={(event) => setAmount(Number(event.target.value))}
+            value={amount}
+            onChange={setAmount}
             className="form-input"
           />
         </label>

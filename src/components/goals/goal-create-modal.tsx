@@ -2,12 +2,12 @@
 
 import { FormEvent, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
+import { MoneyInput } from '@/components/ui/money-input';
 import type { CurrencyCode, GoalPriority, GoalType } from '@/types';
 
-type CustomGoalType = Exclude<GoalType, 'emergency'>;
+type CustomGoalType = Exclude<GoalType, 'emergency' | 'home'>;
 
 const goalTypeLabels: Record<CustomGoalType, string> = {
-  home: 'Casa',
   car: 'Auto',
   retirement: 'Retiro',
   travel: 'Viaje',
@@ -20,8 +20,8 @@ interface GoalCreateModalProps {
 }
 
 export function GoalCreateModal({ onClose, onCreated }: GoalCreateModalProps) {
-  const [name, setName] = useState('');
-  const [goalType, setGoalType] = useState<CustomGoalType>('custom');
+  const [name, setName] = useState('Fondo de retiro');
+  const [goalType, setGoalType] = useState<CustomGoalType>('retirement');
   const [targetAmount, setTargetAmount] = useState(0);
   const [currency, setCurrency] = useState<CurrencyCode>('ARS');
   const [deadline, setDeadline] = useState('');
@@ -104,12 +104,11 @@ export function GoalCreateModal({ onClose, onCreated }: GoalCreateModalProps) {
           </label>
           <label className="block text-sm font-bold text-ink">
             Monto objetivo
-            <input
+            <MoneyInput
               required
-              min="0.01"
-              type="number"
-              value={targetAmount || ''}
-              onChange={(event) => setTargetAmount(Number(event.target.value))}
+              min={0.01}
+              value={targetAmount}
+              onChange={setTargetAmount}
               className="form-input"
             />
           </label>
