@@ -13,7 +13,7 @@ description: "Constitución del proyecto — reglas inmutables que gobiernan TOD
 
 ### 1.1 Arquitectura
 - **Patrón:** Next.js App Router con API Routes (fullstack monolítico)
-- **Módulos centrales:** transactions, categories, budgets, reports, auth (futuro)
+- **Módulos centrales:** transactions, categories, budgets, reports, auth
 - **Flujo de datos:** Client Components fetchean a API Routes → Mongoose → MongoDB
 - **Capas:** UI (React) → API Routes (manejo HTTP) → Models (Mongoose) → DB (MongoDB)
 
@@ -21,7 +21,7 @@ description: "Constitución del proyecto — reglas inmutables que gobiernan TOD
 - Frontend: Next.js 15 (App Router), React 19, TypeScript strict, TailwindCSS, Tremor
 - Backend: Next.js API Routes, Mongoose, Zod (validación)
 - Base de datos: MongoDB 7 (Docker local)
-- Auth: Sin auth (MVP). Futuro: NextAuth.js con credenciales + Google
+- Auth: JWT propio (bcryptjs + jsonwebtoken) con credenciales email/password. Futuro: Google OAuth
 
 ### 1.3 Estándares de Código (no negociables)
 - Lenguaje principal: TypeScript (strict mode, sin `any`)
@@ -34,8 +34,9 @@ description: "Constitución del proyecto — reglas inmutables que gobiernan TOD
 - JAMÁS hardcodear secretos — todo vía variables de entorno
 - `.env` gitignored, `.env.example` versionado con placeholders
 - Validación de input con Zod en TODAS las API routes
-- Contraseñas hasheadas con bcryptjs (cuando se implemente auth)
-- JWT para sesiones (cuando se implemente auth)
+- Contraseñas hasheadas con bcryptjs
+- Sesión con JWT firmado en cookie httpOnly (sameSite, maxAge definido)
+- Protección de API routes y páginas via middleware (401/redirect sin sesión)
 
 ### 1.5 Calidad UI
 - Mobile-first con Tailwind
@@ -61,8 +62,13 @@ description: "Constitución del proyecto — reglas inmutables que gobiernan TOD
 - Categorías por defecto se crean al inicializar la DB
 - Colores en formato hex (#RRGGBB)
 
+### 2.4 Usuarios
+- Single-user: solo existe UNA cuenta en el sistema
+- El primer registro crea el usuario; intentos posteriores devuelven error
+- El usuario creado no se puede eliminar desde la app (MVP)
+
 ## 3. Fuera de Alcance (MVP)
-- Autenticación/autorización
+- Google OAuth / proveedores externos (futuro)
 - Multi-moneda
 - Exportar datos
 - PWA / notificaciones push
