@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { SavingsGoal } from '@/models/SavingsGoal';
 
@@ -10,6 +11,10 @@ interface RouteContext {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     const { id } = await context.params;
 

@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { Category } from '@/models/Category';
 
 export async function GET() {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     await connectDB();
     const categories = await Category.find().sort({ name: 1 });
@@ -29,6 +34,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     await connectDB();
     const body = await request.json();

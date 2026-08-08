@@ -5,12 +5,8 @@ import { AppHeader } from '@/components/layout/app-header';
 import { AvatarIcon, avatarIds } from '@/components/avatar/avatar-icon';
 import type { AvatarId, CurrencyCode, IFinancialProfile } from '@/types';
 
-interface ProfileResponse extends IFinancialProfile {
-  hasPassword?: boolean;
-}
-
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+  const [profile, setProfile] = useState<IFinancialProfile | null>(null);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState<AvatarId>('ren');
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>('ARS');
@@ -18,7 +14,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pickering, setPickerOpen] = useState(false);
-  const [hasPassword, setHasPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -38,11 +33,10 @@ export default function ProfilePage() {
           throw new Error('No se pudo cargar el perfil');
         }
 
-        const loadedProfile = result as ProfileResponse;
+        const loadedProfile = result as IFinancialProfile;
         setProfile(loadedProfile);
         setName(loadedProfile.name);
         setAvatar(loadedProfile.avatar ?? 'ren');
-        setHasPassword(Boolean(loadedProfile.hasPassword));
         setBaseCurrency(loadedProfile.baseCurrency);
         setSavingsCurrency(loadedProfile.savingsCurrency);
       } catch (loadError: unknown) {
@@ -77,7 +71,7 @@ export default function ProfilePage() {
         );
       }
 
-      const updated = result as ProfileResponse;
+      const updated = result as IFinancialProfile;
       setProfile(updated);
       setAvatar(updated.avatar ?? 'ren');
       setMessage('Perfil actualizado');
@@ -123,7 +117,6 @@ export default function ProfilePage() {
         );
       }
 
-      setHasPassword(true);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -224,22 +217,16 @@ export default function ProfilePage() {
               <div className="border-t-2 border-ink pt-5">
                 <h3 className="text-sm font-extrabold uppercase tracking-tight">Contraseña</h3>
                 <div className="mt-3 space-y-4">
-                  {hasPassword ? (
-                    <label className="block text-sm font-bold text-ink">
-                      Contraseña actual
-                      <input
-                        type="password"
-                        value={currentPassword}
-                        onChange={(event) => setCurrentPassword(event.target.value)}
-                        className="form-input"
-                        autoComplete="current-password"
-                      />
-                    </label>
-                  ) : (
-                    <p className="text-sm font-medium text-ink/70">
-                      Todavía no definiste una contraseña. Agregala para proteger tu perfil.
-                    </p>
-                  )}
+                  <label className="block text-sm font-bold text-ink">
+                    Contraseña actual
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      className="form-input"
+                      autoComplete="current-password"
+                    />
+                  </label>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block text-sm font-bold text-ink">
                       Nueva contraseña

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { Category } from '@/models/Category';
 import { SavingsGoal } from '@/models/SavingsGoal';
 import { Transaction } from '@/models/Transaction';
@@ -46,6 +47,10 @@ const querySchema = z.object({
 });
 
 export async function GET(request: Request) {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     const url = new URL(request.url);
     const parsedQuery = querySchema.safeParse({
@@ -94,6 +99,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     const body: unknown = await request.json();
     const parsed = transactionSchema.safeParse(body);

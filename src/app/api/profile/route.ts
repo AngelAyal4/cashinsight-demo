@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { hashPassword, verifyPassword } from '@/lib/password';
 import { FinancialProfile } from '@/models/FinancialProfile';
+import { User } from '@/models/User';
 import type { AvatarId } from '@/types';
 
 const avatarValues: [AvatarId, ...AvatarId[]] = [
@@ -23,25 +25,33 @@ const profileUpdateSchema = z.object({
   baseCurrency: z.enum(['ARS', 'USD', 'EUR']).optional(),
   savingsCurrency: z.enum(['ARS', 'USD', 'EUR']).optional(),
   avatar: z.enum(avatarValues).optional(),
-  currentPassword: z.string().max(200).optional(),
-  newPassword: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres').max(200).optional(),
+});
+
+const passwordChangeSchema = z.object({
+  currentPassword: z
+    .string({ message: 'La contraseña actual es obligatoria' })
+    .min(1, 'La contraseña actual es obligatoria')
+    .max(200),
+  newPassword: z
+    .string({ message: 'La nueva contraseña es obligatoria' })
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .max(200, 'La contraseña no puede superar los 200 caracteres'),
 });
 
 export async function GET() {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     await connectDB();
-    const profile = await FinancialProfile.findOne().select('+passwordHash +passwordSalt');
+    const profile = await FinancialProfile.findOne();
 
     if (!profile) {
       return NextResponse.json({ error: 'No hay perfil configurado' }, { status: 404 });
     }
 
-    return NextResponse.json({
-      ...profile.toObject(),
-      passwordHash: undefined,
-      passwordSalt: undefined,
-      hasPassword: Boolean(profile.passwordHash),
-    });
+    return NextResponse.json(profile.toObject());
   } catch (error: unknown) {
     console.error('Error obteniendo perfil financiero:', error);
     return NextResponse.json(
@@ -52,8 +62,48 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     const body: unknown = await request.json();
+
+    if (typeof body === 'object' && body !== null && 'newPassword' in body) {
+      const parsedPassword = passwordChangeSchema.safeParse(body);
+
+      if (!parsedPassword.success) {
+        return NextResponse.json(
+          { error: parsedPassword.error.issues[0]?.message ?? 'Los datos de contraseña no son válidos' },
+          { status: 400 }
+        );
+      }
+
+      await connectDB();
+      const user = await User.findOne().select('+passwordHash');
+
+      if (!user) {
+        return unauthorizedResponse();
+      }
+
+      const passwordOk = await verifyPassword(
+        parsedPassword.data.currentPassword,
+        user.passwordHash
+      );
+
+      if (!passwordOk) {
+        return NextResponse.json(
+          { error: 'La contraseña actual es incorrecta' },
+          { status: 400 }
+        );
+      }
+
+      user.passwordHash = await hashPassword(parsedPassword.data.newPassword);
+      await user.save();
+
+      return NextResponse.json({ message: 'Contraseña actualizada' });
+    }
+
     const parsed = profileUpdateSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -64,39 +114,13 @@ export async function PATCH(request: Request) {
     }
 
     await connectDB();
-    const profile = await FinancialProfile.findOne().select('+passwordHash +passwordSalt');
+    const profile = await FinancialProfile.findOne();
 
     if (!profile) {
       return NextResponse.json(
         { error: 'Primero completá el onboarding' },
         { status: 404 }
       );
-    }
-
-    const current = parsed.data.currentPassword;
-    const newPassword = parsed.data.newPassword;
-
-    if (newPassword) {
-      if (profile.passwordHash && profile.passwordSalt) {
-        if (!current) {
-          return NextResponse.json(
-            { error: 'Ingresá tu contraseña actual' },
-            { status: 400 }
-          );
-        }
-
-        const matches = verifyPassword(current, profile.passwordSalt, profile.passwordHash);
-        if (!matches) {
-          return NextResponse.json(
-            { error: 'La contraseña actual es incorrecta' },
-            { status: 400 }
-          );
-        }
-      }
-
-      const { hash, salt } = hashPassword(newPassword);
-      profile.passwordHash = hash;
-      profile.passwordSalt = salt;
     }
 
     const updates = parsed.data;
@@ -125,12 +149,7 @@ export async function PATCH(request: Request) {
     });
     const savedProfile = await profile.save();
 
-    return NextResponse.json({
-      ...savedProfile.toObject(),
-      passwordHash: undefined,
-      passwordSalt: undefined,
-      hasPassword: Boolean(savedProfile.passwordHash),
-    });
+    return NextResponse.json(savedProfile.toObject());
   } catch (error: unknown) {
     console.error('Error actualizando perfil financiero:', error);
     return NextResponse.json(

@@ -2,11 +2,8 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 import { IFinancialProfile } from '@/types';
 
 export interface IFinancialProfileDocument
-  extends Omit<IFinancialProfile, '_id'>,
-    Document {
-  passwordHash?: string;
-  passwordSalt?: string;
-}
+  extends Omit<IFinancialProfile, '_id' | 'hasPassword'>,
+    Document {}
 
 const financialProfileSchema = new Schema<IFinancialProfileDocument>(
   {
@@ -57,14 +54,6 @@ const financialProfileSchema = new Schema<IFinancialProfileDocument>(
       type: String,
       enum: ['bruno', 'mateo', 'clara', 'lucía', 'ren', 'max'],
       default: 'ren',
-    },
-    passwordHash: {
-      type: String,
-      select: false,
-    },
-    passwordSalt: {
-      type: String,
-      select: false,
     },
     onboardingCompleted: {
       type: Boolean,

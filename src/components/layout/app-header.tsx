@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AvatarIcon } from '@/components/avatar/avatar-icon';
 import type { AvatarId } from '@/types';
@@ -68,9 +68,52 @@ function HeaderAvatar() {
 
 export function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSession(): Promise<void> {
+      try {
+        const response = await fetch('/api/auth/me');
+        const result: unknown = await response.json();
+
+        if (!response.ok || !result || typeof result !== 'object') {
+          return;
+        }
+
+        const session = result as { user?: { email?: string } };
+        if (!cancelled && session.user?.email) {
+          setUserEmail(session.user.email);
+        }
+      } catch {
+        // Sin sesión activa el proxy redirige a /login.
+      }
+    }
+
+    void loadSession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleLogout(): Promise<void> {
+    setLoggingOut(true);
+
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Sin cookie, el proxy redirige a /login de todos modos.
+    } finally {
+      router.replace('/login');
+      router.refresh();
+    }
+  }
 
   return (
     <header className="border-b-4 border-ink bg-white">
@@ -98,7 +141,7 @@ export function AppHeader() {
         </Link>
         <nav
           aria-label="Navegación principal"
-          className="hidden shrink-0 sm:block"
+          className="hidden shrink-0 items-center gap-2 sm:flex"
         >
           <ul className="flex flex-wrap items-center gap-2 text-sm">
             {navigation.map((item) => {
@@ -120,6 +163,19 @@ export function AppHeader() {
               );
             })}
           </ul>
+          {userEmail ? (
+            <span className="hidden max-w-[180px] truncate text-xs font-semibold text-ink/60 lg:block">
+              {userEmail}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            disabled={loggingOut}
+            className="border-2 border-ink px-3 py-1.5 text-sm font-bold text-ink transition hover:bg-rose-600 hover:text-white"
+          >
+            {loggingOut ? 'Saliendo...' : 'Salir'}
+          </button>
         </nav>
         <button
           type="button"
@@ -173,6 +229,22 @@ export function AppHeader() {
               );
             })}
           </ul>
+          {userEmail ? (
+            <span className="truncate px-1 text-xs font-semibold text-ink/60">
+              {userEmail}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              void handleLogout();
+            }}
+            disabled={loggingOut}
+            className="block border-2 border-ink px-3 py-2 text-left font-bold text-ink transition hover:bg-rose-600 hover:text-white"
+          >
+            {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+          </button>
         </nav>
       )}
     </header>

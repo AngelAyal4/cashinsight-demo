@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import '@/models/Category';
 import { FinancialProfile } from '@/models/FinancialProfile';
@@ -22,6 +23,10 @@ interface CategoryExpense {
 }
 
 export async function GET() {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     await connectDB();
 

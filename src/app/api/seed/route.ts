@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { Category } from '@/models/Category';
 import { Transaction } from '@/models/Transaction';
@@ -20,6 +21,10 @@ const defaultCategories = [
 ] as const;
 
 export async function POST() {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     await connectDB();
 

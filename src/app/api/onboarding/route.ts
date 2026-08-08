@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { calculateFinancialPlan } from '@/lib/financial-plan';
 import { FinancialProfile } from '@/models/FinancialProfile';
@@ -36,6 +37,10 @@ function getValidationMessage(error: z.ZodError): string {
 }
 
 export async function POST(request: Request) {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     const body: unknown = await request.json();
     const parsed = onboardingSchema.safeParse(body);

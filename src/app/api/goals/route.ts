@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { SavingsGoal } from '@/models/SavingsGoal';
 import { getGoalsWithProgress } from '@/lib/goal-progress';
@@ -18,6 +19,10 @@ const goalSchema = z.object({
 });
 
 export async function GET() {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     await connectDB();
     return NextResponse.json(await getGoalsWithProgress());
@@ -31,6 +36,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!(await getSessionUserId())) {
+    return unauthorizedResponse();
+  }
+
   try {
     const body: unknown = await request.json();
     const parsed = goalSchema.safeParse(body);

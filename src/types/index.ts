@@ -57,12 +57,8 @@ export interface IBudget {
 }
 
 export interface IUser {
-  _id?: string;
+  _id: string;
   email: string;
-  password: string;
-  name: string;
-  avatar?: string;
-  currency?: CurrencyCode;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -113,7 +109,6 @@ export interface IFinancialProfile {
   baseCurrency: CurrencyCode;
   savingsCurrency: CurrencyCode;
   avatar?: AvatarId;
-  hasPassword?: boolean;
   onboardingCompleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
