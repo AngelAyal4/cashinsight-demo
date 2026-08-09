@@ -19,24 +19,33 @@ description: "Proyecto CashinsightApp — reglas, stack, estándares y contexto 
 src/
 ├── app/                 # Pages + API Routes
 │   ├── api/
-│   │   ├── auth/        # (futuro)
-│   │   ├── budgets/     # CRUD presupuestos
-│   │   ├── categories/  # CRUD categorías
-│   │   ├── reports/     # Reportes y estadísticas
+│   │   ├── auth/        # register/login/logout/me/account
+│   │   ├── budgets/     # CRUD límites de Control
+│   │   ├── categories/  # CRUD categorías (con behavior fijo/variable)
+│   │   ├── goals/       # Metas de ahorro
+│   │   ├── monthly/     # (futuro) rollover + snapshots
+│   │   ├── onboarding/  # Setup inicial
+│   │   ├── profile/     # Perfil financiero
+│   │   ├── reports/     # Reportes: summary + /reports (snapshots)
 │   │   └── transactions/# CRUD transacciones
-│   ├── budgets/         # Página presupuestos
-│   ├── transactions/    # Página transacciones
-│   ├── reports/         # Página reportes
+│   ├── control/         # Página Control (límites de gasto variable) — ex /presupuestos
+│   ├── help/            # Página Ayuda
+│   ├── metas/           # Página Metas
+│   ├── report/          # Página Reportes (historial de snapshots)
 │   ├── layout.tsx       # Layout principal
-│   └── page.tsx         # Dashboard
+│   └── page.tsx         # Principal (presupuesto general + indicadores)
 ├── components/          # Componentes reutilizables
 ├── hooks/               # Custom hooks
-├── lib/                 # Utilidades (db.ts, auth.ts futuro)
-├── middleware/          # Middleware (auth futuro)
+├── lib/                 # Utilidades (db.ts, monthly-cycle.ts, auth.ts)
+├── middleware/          # Middleware (auth)
 ├── models/              # Modelos Mongoose
 │   ├── Budget.ts
 │   ├── Category.ts
-│   └── Transaction.ts
+│   ├── FinancialProfile.ts
+│   ├── MonthlySnapshot.ts
+│   ├── SavingsGoal.ts
+│   ├── Transaction.ts
+│   └── User.ts
 ├── types/               # Types TypeScript
 │   └── index.ts
 └── styles/              # Estilos globales
