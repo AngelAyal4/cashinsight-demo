@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
+import { NotificationsSection } from '@/components/profile/notifications-section';
 import type { CurrencyCode, IFinancialProfile } from '@/types';
 
 export default function ProfilePage() {
@@ -317,7 +318,8 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
-<aside className="card-brutal animate-fade-in flex h-full flex-col p-5" style={{ animationDelay: '100ms' }}>
+<div className="flex flex-col gap-6">
+              <aside className="card-brutal animate-fade-in flex flex-col p-5" style={{ animationDelay: '100ms' }}>
               <h2 className="text-lg font-extrabold uppercase tracking-tight">Recomendaciones</h2>
               <ul className="mt-3 flex-1 space-y-3 text-sm font-medium text-ink/80">
                 <li className="flex gap-2">
@@ -364,7 +366,9 @@ export default function ProfilePage() {
                <Link href="/help" className="btn-brutal btn-brutal-secondary mt-4 block text-center">
                  Obtener más ayuda
                </Link>
-             </aside>
+              </aside>
+              <NotificationsSection />
+            </div>
           </div>
         ) : (
           <section className="mt-8 border-2 border-ink bg-blue-600 p-6 text-white shadow-[4px_4px_0_0_#111111]">

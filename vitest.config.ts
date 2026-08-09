@@ -20,6 +20,7 @@ export default defineConfig({
         'src/lib/financial-metrics.ts',
         'src/lib/budget-progress.ts',
         'src/lib/format.ts',
+        'src/lib/notification-triggers.ts',
         'src/app/api/**/route.ts',
       ],
       thresholds: {

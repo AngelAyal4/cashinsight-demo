@@ -10,6 +10,7 @@ import { MovementForm } from '@/components/movements/movement-form';
 import { MovementsList } from '@/components/movements/movements-list';
 import { Modal } from '@/components/ui/modal';
 import { useDashboard } from '@/hooks/use-dashboard';
+import { useThresholdNotifications } from '@/hooks/use-threshold-notifications';
 import { formatCurrency } from '@/lib/format';
 import type { ITransaction, TransactionKind } from '@/types';
 
@@ -19,6 +20,12 @@ export default function Home() {
   const [initialType, setInitialType] = useState<TransactionKind | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [movementsRefreshKey, setMovementsRefreshKey] = useState(0);
+
+  useThresholdNotifications({
+    budgets: data?.budgets,
+    goals: data?.goals,
+    stats: data ?? undefined,
+  });
 
   const currency = data?.profile?.baseCurrency ?? 'ARS';
 

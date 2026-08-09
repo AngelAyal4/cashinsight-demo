@@ -5,6 +5,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { BudgetCard } from '@/components/budgets/budget-card';
 import { BudgetFormModal } from '@/components/budgets/budget-form-modal';
 import { useBudgets } from '@/hooks/use-budgets';
+import { useThresholdNotifications } from '@/hooks/use-threshold-notifications';
 import type { BudgetProgress, CurrencyCode } from '@/types';
 
 export default function ControlPage() {
@@ -13,6 +14,8 @@ export default function ControlPage() {
   const [editing, setEditing] = useState<BudgetProgress | null>(null);
   const [deleting, setDeleting] = useState<BudgetProgress | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+
+  useThresholdNotifications({ budgets });
 
   useEffect(() => {
     let cancelled = false;
