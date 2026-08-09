@@ -98,6 +98,5 @@ description: "Constitución del proyecto — reglas inmutables que gobiernan TOD
 ## 4. Fuera de Alcance (MVP)
 - Google OAuth / proveedores externos (futuro)
 - Multi-moneda por transacción (divisa base + ahorro global)
-- PWA / notificaciones push
+- Push remoto (web-push/VAPID) y recordatorios automáticos (cron externo)
 - App móvil nativa
-- Recordatorios automáticos (cron externo)
