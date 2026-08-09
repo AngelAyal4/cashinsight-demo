@@ -11,32 +11,38 @@ import { MovementsList } from '@/components/movements/movements-list';
 import { Modal } from '@/components/ui/modal';
 import { useDashboard } from '@/hooks/use-dashboard';
 import { formatCurrency } from '@/lib/format';
-import type { ITransaction } from '@/types';
+import type { ITransaction, TransactionKind } from '@/types';
 
 export default function Home() {
   const { data, loading, error, retry } = useDashboard();
   const [editing, setEditing] = useState<ITransaction | null>(null);
+  const [initialType, setInitialType] = useState<TransactionKind | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [movementsRefreshKey, setMovementsRefreshKey] = useState(0);
 
   const currency = data?.profile?.baseCurrency ?? 'ARS';
 
-  function openModal(transaction: ITransaction | null) {
+  function openModal(transaction: ITransaction | null, type?: TransactionKind) {
     setEditing(transaction);
+    setInitialType(type ?? null);
     setModalOpen(true);
   }
 
   function closeModal() {
     setModalOpen(false);
     setEditing(null);
+    setInitialType(null);
   }
 
   function handleSaved() {
     setModalOpen(false);
     setEditing(null);
+    setInitialType(null);
     setMovementsRefreshKey((key) => key + 1);
     retry();
   }
+
+  const hasIncome = (data?.monthlyIncome ?? 0) > 0;
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -44,11 +50,43 @@ export default function Home() {
       <main className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wider text-lime">Principal</p>
+            <p className="text-sm font-bold uppercase tracking-wider text-lime">
+              Principal
+            </p>
             <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-ink">
-              Tu dinero, de un vistazo
+              {data ? data.monthLabel : 'Tu dinero, de un vistazo'}
             </h1>
+            {data ? (
+              <p className="mt-1 text-sm font-medium text-ink/70">
+                Balance del mes:{' '}
+                <strong
+                  className={data.monthlyBalance >= 0 ? 'text-emerald-600' : 'text-rose-700'}
+                >
+                  {formatCurrency(data.monthlyBalance, currency)}
+                </strong>
+              </p>
+            ) : null}
           </div>
+          {data ? (
+            <div className="flex flex-wrap gap-2">
+              {!hasIncome ? (
+                <button
+                  type="button"
+                  onClick={() => openModal(null, 'income')}
+                  className="btn-brutal btn-brutal-secondary"
+                >
+                  Cargar mi ingreso
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => openModal(null)}
+                className="btn-brutal"
+              >
+                Nuevo movimiento
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {error ? (
@@ -77,6 +115,24 @@ export default function Home() {
                       Configurar ahora
                     </Link>
                   </section>
+                ) : !hasIncome ? (
+                  <section className="border-2 border-ink bg-blue-600 p-5 text-white shadow-[4px_4px_0_0_#111111]">
+                    <h2 className="font-extrabold uppercase tracking-tight">
+                      Cargá tu ingreso para empezar el mes
+                    </h2>
+                    <p className="mt-1 max-w-2xl text-sm font-medium">
+                      Sin ingresos registrados no mostramos números inventados:
+                      cargá tu sueldo o ingreso del mes para calcular tu
+                      disponible para gastar y tu ahorro objetivo.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => openModal(null, 'income')}
+                      className="btn-brutal btn-brutal-secondary mt-4"
+                    >
+                      Cargar mi ingreso
+                    </button>
+                  </section>
                 ) : data.scoreMessage ? (
                   <section
                     role="status"
@@ -84,7 +140,7 @@ export default function Home() {
                   >
                     <p className="font-extrabold uppercase tracking-tight">{data.scoreMessage}</p>
                     <p className="mt-1 text-sm font-medium">
-                      Tu puntaje actual es {data.financialScore}/100. Revisá el presupuesto del mes
+                      Tu puntaje actual es {data.financialScore}/100. Revisá tus límites del mes
                       y ajustá tus aportes si hace falta.
                     </p>
                   </section>
@@ -92,58 +148,86 @@ export default function Home() {
               </>
             ) : null}
 
-            <section aria-label="Resumen financiero" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <section aria-label="Indicadores del mes" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div key={String(loading)} className="animate-fade-in h-full">
                 <ExpensesDonutChart
                   data={data?.incomeDistribution ?? []}
                   loading={loading}
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => openModal(null)}
-                className="btn-brutal w-full whitespace-nowrap sm:absolute sm:right-6 sm:top-12 sm:w-auto lg:right-8"
-              >
-                Nuevo movimiento
-              </button>
-              <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {data ? (
                   <>
-                    <StatCard
-                      className="flex-1 animate-fade-in"
-                      style={{ animationDelay: '0ms' }}
-                      label="Balance total"
-                      value={formatCurrency(data.totalBalance, currency)}
-                    />
-                    <StatCard
-                      className="flex-1 animate-fade-in"
-                      style={{ animationDelay: '75ms' }}
-                      label="Ingresos del mes"
-                      value={formatCurrency(data.monthlyIncome, currency)}
-                    />
-                    <StatCard
-                      className="flex-1 animate-fade-in"
-                      style={{ animationDelay: '150ms' }}
-                      label="Gastos del mes"
-                      value={formatCurrency(data.monthlyExpense, currency)}
-                    />
-                    <StatCard
-                      className="flex-1 animate-fade-in"
-                      style={{ animationDelay: '225ms' }}
-                      label="Salud financiera"
-                      value={data.financialScore === null ? 'Pendiente' : `${data.financialScore}/100`}
-                    />
+                    <StatCard label="Ingresos del mes" value={formatCurrency(data.monthlyIncome, currency)} />
+                    <StatCard label="Ahorro del mes" value={formatCurrency(data.monthlySavings, currency)} />
+                    {hasIncome ? (
+                      <>
+                        <StatCard
+                          label="Disponible para gastar"
+                          value={formatCurrency(data.availableToSpend, currency)}
+                        />
+                        <StatCard
+                          label="Per día restante"
+                          value={formatCurrency(data.perDayRemaining, currency)}
+                          className={data.daysRemaining > 1 ? 'bg-emerald-50' : ''}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <StatCard label="Gastos del mes" value={formatCurrency(data.monthlyExpense, currency)} />
+                        <StatCard label="Salud financiera" value="Pendiente" />
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
-                    <StatCardSkeleton className="flex-1" />
-                    <StatCardSkeleton className="flex-1" />
-                    <StatCardSkeleton className="flex-1" />
-                    <StatCardSkeleton className="flex-1" />
+                    <StatCardSkeleton />
+                    <StatCardSkeleton />
+                    <StatCardSkeleton />
+                    <StatCardSkeleton />
                   </>
                 )}
               </div>
             </section>
+
+            {data ? (
+              <section aria-label="Presupuesto del mes" className="card-brutal p-5">
+                <div className="grid gap-4 lg:grid-cols-3">
+                  <div>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-ink/60">Gastos fijos</h2>
+                    <p className="mt-2 text-2xl font-extrabold text-ink">
+                      {formatCurrency(data.totalFixed, currency)}
+                    </p>
+                  </div>
+                  {hasIncome ? (
+                    <>
+                      <div>
+                        <h2 className="text-sm font-bold uppercase tracking-wider text-ink/60">
+                          Gastos variables
+                        </h2>
+                        <p className="mt-2 text-2xl font-extrabold text-ink">
+                          {formatCurrency(data.totalVariable, currency)}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-ink/70">
+                          {data.monthlyExpense > 0
+                            ? `${((data.totalVariable / data.monthlyExpense) * 100).toFixed(0)}% de tus gastos`
+                            : 'Sin gastos variables desde Principal'}
+                        </p>
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold uppercase tracking-wider text-ink/60">Tasa de ahorro</h2>
+                        <p className="mt-2 text-2xl font-extrabold text-violet">
+                          {data.savingsRate.toFixed(1)}%
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-ink/70">
+                          {data.daysRemaining} días restantes del mes
+                        </p>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
 
             {data && data.budgets.length > 0 ? (
               <section aria-label="Presupuestos activos" className="card-brutal p-5">
@@ -151,7 +235,7 @@ export default function Home() {
                   <h2 className="text-sm font-bold uppercase tracking-wider text-ink/60">
                     Presupuestos activos
                   </h2>
-                  <Link href="/presupuestos" className="link-brutal text-xs">
+                  <Link href="/control" className="link-brutal text-xs">
                     Ver todos
                   </Link>
                 </div>
@@ -162,7 +246,8 @@ export default function Home() {
                         <span className="truncate">{budget.category.name}</span>
                         <span className="shrink-0 text-ink/60">
                           {formatCurrency(budget.usedAmount, currency)} de{' '}
-                          {formatCurrency(budget.amount, currency)}
+                          {formatCurrency(budget.amount, currency)} ·{' '}
+                          {budget.usagePercent.toFixed(0)}%
                         </span>
                       </div>
                       <BudgetProgressBar budget={budget} className="mt-1" />
@@ -204,9 +289,10 @@ export default function Home() {
         onClose={closeModal}
       >
         <MovementForm
-          key={editing?._id ?? 'new'}
+          key={editing?._id ?? (initialType ?? 'new')}
           goals={data?.goals ?? []}
           editing={editing}
+          initialType={initialType ?? undefined}
           onSaved={handleSaved}
           onCancel={closeModal}
         />

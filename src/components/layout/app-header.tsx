@@ -3,14 +3,27 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AvatarIcon } from '@/components/avatar/avatar-icon';
-import type { AvatarId } from '@/types';
 
 const navigation = [
   { href: '/', label: 'Principal' },
+  { href: '/control', label: 'Control' },
   { href: '/metas', label: 'Metas' },
-  { href: '/presupuestos', label: 'Presupuestos' },
+  { href: '/report', label: 'Reportes' },
 ];
+
+const PROFILE_NAME_STORAGE_KEY = 'cashinsight-profile-name';
+
+function getStoredProfileName(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(PROFILE_NAME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
 
 function UserIcon({ className }: { className?: string }) {
   return (
@@ -32,8 +45,7 @@ function UserIcon({ className }: { className?: string }) {
 
 function HeaderAvatar() {
   const pathname = usePathname();
-  const [avatar, setAvatar] = useState<AvatarId | null>(null);
-  const [name, setName] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(() => getStoredProfileName());
 
   useEffect(() => {
     let cancelled = false;
@@ -47,17 +59,17 @@ function HeaderAvatar() {
           return;
         }
 
-        const profile = result as { avatar?: AvatarId; name?: string };
-        if (!cancelled) {
-          if (profile.avatar) {
-            setAvatar(profile.avatar);
+        const profile = result as { name?: string };
+        if (!cancelled && profile.name) {
+          try {
+            window.localStorage.setItem(PROFILE_NAME_STORAGE_KEY, profile.name);
+          } catch {
+            // La caché es opcional; el nombre sigue funcionando en memoria.
           }
-          if (profile.name) {
-            setName(profile.name);
-          }
+          setName(profile.name);
         }
       } catch {
-        // El avatar es decorativo; si falla, no mostramos nada.
+        // El nombre es decorativo; el icono sigue disponible si falla la carga.
       }
     }
 
@@ -72,24 +84,21 @@ function HeaderAvatar() {
       <Link
         href="/perfil"
         aria-label="Perfil"
-        title={name ?? 'Perfil'}
+        title="Perfil"
         className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 transition ${
           pathname === '/perfil'
             ? 'border-ink bg-lime shadow-[3px_3px_0_0_#111111]'
             : 'border-ink bg-white hover:bg-lime'
         }`}
       >
-        {avatar ? (
-          <AvatarIcon id={avatar} className="h-full w-full" />
-        ) : (
-          <UserIcon className="h-5 w-5 text-ink" />
-        )}
+        <UserIcon className="h-5 w-5 text-ink" />
       </Link>
-      {name ? (
-        <span className="hidden whitespace-nowrap text-sm font-semibold text-ink/60 md:inline">
-          {name}
-        </span>
-      ) : null}
+      <span
+        className="hidden whitespace-nowrap text-sm font-semibold text-ink/60 md:inline"
+        suppressHydrationWarning
+      >
+        {name ?? ''}
+      </span>
     </div>
   );
 }
@@ -102,20 +111,22 @@ export function AppHeader() {
 
   return (
     <header className="border-b-4 border-ink bg-white">
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <HeaderAvatar />
-        <Link
-          href="/"
-          className="flex flex-1 items-center justify-center gap-2 text-xl font-extrabold tracking-tight text-ink"
-        >
-          <span className="flex h-9 w-9 items-center justify-center border-2 border-ink bg-lime text-lg">
-            $
-          </span>
-          <span className="truncate">CashinsightApp</span>
-        </Link>
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-ink"
+          >
+            <span className="flex h-9 w-9 items-center justify-center border-2 border-ink bg-lime text-lg">
+              $
+            </span>
+            <span className="truncate">CashinsightApp</span>
+          </Link>
+        </div>
         <nav
           aria-label="Navegación principal"
-          className="hidden shrink-0 items-center gap-2 sm:flex"
+          className="hidden shrink-0 items-center gap-2 sm:ml-auto sm:flex"
         >
           <ul className="flex flex-wrap items-center gap-2 text-sm">
             {navigation.map((item) => {
@@ -143,7 +154,7 @@ export function AppHeader() {
           aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-ink bg-white transition hover:bg-lime sm:hidden"
+          className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center border-2 border-ink bg-white transition hover:bg-lime sm:hidden"
         >
           <span className="flex flex-col gap-1">
             <span
@@ -178,7 +189,7 @@ export function AppHeader() {
                   <Link
                     href={item.href}
                     onClick={closeMenu}
-                    className={`block border-2 px-3 py-2 font-bold transition ${
+                    className={`block border-2 px-3 py-2 text-right font-bold transition ${
                       isActive
                         ? 'border-ink bg-lime text-ink'
                         : 'border-transparent text-ink hover:border-ink'

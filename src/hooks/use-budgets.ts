@@ -10,7 +10,8 @@ interface UseBudgetsResult {
   retry: () => void;
 }
 
-export function useBudgets(): UseBudgetsResult {
+/** Filtro opcional por comportamiento de la categoría (Control usa 'variable'). */
+export function useBudgets(behavior?: 'fijo' | 'variable'): UseBudgetsResult {
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,10 @@ export function useBudgets(): UseBudgetsResult {
       setError(null);
 
       try {
-        const response = await fetch('/api/budgets', { signal: controller.signal });
+        const query = behavior ? `?behavior=${behavior}` : '';
+        const response = await fetch(`/api/budgets${query}`, {
+          signal: controller.signal,
+        });
         const body: unknown = await response.json();
 
         if (!response.ok) {
@@ -56,7 +60,7 @@ export function useBudgets(): UseBudgetsResult {
     void loadBudgets();
 
     return () => controller.abort();
-  }, [retryCount]);
+  }, [retryCount, behavior]);
 
   return {
     budgets,

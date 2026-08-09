@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
 import type { CurrencyCode, IFinancialProfile } from '@/types';
@@ -78,6 +79,7 @@ export default function ProfilePage() {
       const updated = result as IFinancialProfile;
       setProfile(updated);
       setMessage('Perfil actualizado');
+      window.location.reload();
     } catch (saveError: unknown) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el perfil');
     } finally {
@@ -334,13 +336,9 @@ export default function ProfilePage() {
                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
                   Revisá tus metas al cierre de cada mes y ajustá prioridades si cambió tu ingreso.
                 </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Aplicá la regla 50/30/20: la mitad a necesidades, 30% a deseos y 20% a ahorro.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Apuntá a un fondo de emergencia de 3 a 6 meses de tus gastos fijos.
+                 <li className="flex gap-2">
+                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                   Apuntá a un fondo de emergencia de 3 a 6 meses de tus gastos fijos.
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
@@ -360,10 +358,13 @@ export default function ProfilePage() {
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Mantené actualizados tus ingresos y gastos fijos para que el puntaje sea fiel a tu realidad.
-                </li>
-              </ul>
-            </aside>
+                   Mantené actualizados tus ingresos y gastos fijos para que el puntaje sea fiel a tu realidad.
+                 </li>
+               </ul>
+               <Link href="/help" className="btn-brutal btn-brutal-secondary mt-4 block text-center">
+                 Obtener más ayuda
+               </Link>
+             </aside>
           </div>
         ) : (
           <section className="mt-8 border-2 border-ink bg-blue-600 p-6 text-white shadow-[4px_4px_0_0_#111111]">

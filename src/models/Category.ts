@@ -27,6 +27,11 @@ const categorySchema = new Schema<ICategoryDocument>(
       type: Boolean,
       default: false,
     },
+    behavior: {
+      type: String,
+      enum: ['fijo', 'variable'],
+      default: 'variable',
+    },
   },
   {
     timestamps: true,

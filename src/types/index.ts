@@ -21,6 +21,8 @@ export type GoalType =
   | 'custom';
 export type BudgetPeriod = 'weekly' | 'monthly' | 'yearly';
 export type BudgetStatus = 'sano' | 'advertencia' | 'excedido';
+export type CategoryBehavior = 'fijo' | 'variable';
+export type MonthKey = string;
 
 export interface ICategory {
   _id?: string;
@@ -29,6 +31,7 @@ export interface ICategory {
   color: string;
   icon?: string;
   isDefault?: boolean;
+  behavior?: CategoryBehavior;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -43,6 +46,7 @@ export interface ITransaction {
   date: Date;
   notes?: string;
   isRecurring?: boolean;
+  archived?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -100,6 +104,14 @@ export interface DashboardStats {
   budgets: BudgetProgress[];
   recentTransactions: ITransaction[];
   incomeDistribution: ExpenseByCategory[];
+  activeMonth: MonthKey;
+  monthLabel: string;
+  daysRemaining: number;
+  totalFixed: number;
+  totalVariable: number;
+  availableToSpend: number;
+  perDayRemaining: number;
+  savingsRate: number;
 }
 
 export interface ExpenseByCategory {
@@ -120,6 +132,7 @@ export interface IFinancialProfile {
   savingsCurrency: CurrencyCode;
   avatar?: AvatarId;
   onboardingCompleted: boolean;
+  activeMonth?: MonthKey;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -143,4 +156,79 @@ export interface GoalProgress extends ISavingsGoal {
   currentAmount: number;
   remainingAmount: number;
   progressPercentage: number;
+}
+
+export interface SnapshotRange {
+  start: string;
+  end: string;
+}
+
+export interface SnapshotCategoryExpense {
+  category: string;
+  name: string;
+  color: string;
+  icon?: string;
+  behavior: CategoryBehavior;
+  total: number;
+  percentage: number;
+}
+
+export interface SnapshotBudgetCompliance {
+  budget: string;
+  category: string;
+  categoryName: string;
+  color: string;
+  amount: number;
+  usedAmount: number;
+  usagePercent: number;
+  status: BudgetStatus;
+}
+
+export interface SnapshotGoal {
+  goal: string;
+  name: string;
+  currency: CurrencyCode;
+  amount: number;
+  targetAmount: number;
+  currentAmount: number;
+  progressPercentage: number;
+}
+
+export interface SnapshotMetrics {
+  topSpendingDay: { date: string; amount: number } | null;
+  averageDailyExpense: number;
+}
+
+export interface IMonthlySnapshot {
+  _id?: string;
+  monthKey: MonthKey;
+  currency: CurrencyCode;
+  range: SnapshotRange;
+  income: number;
+  expenses: number;
+  savings: number;
+  balance: number;
+  totalFixed: number;
+  totalVariable: number;
+  expensesByCategory: SnapshotCategoryExpense[];
+  budgetCompliance: SnapshotBudgetCompliance[];
+  goals: SnapshotGoal[];
+  financialScore: number | null;
+  scoreMessage: string | null;
+  transactionsCount: number;
+  metrics: SnapshotMetrics;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ReportListItem {
+  monthKey: MonthKey;
+  currency: CurrencyCode;
+  income: number;
+  expenses: number;
+  savings: number;
+  balance: number;
+  financialScore: number | null;
+  scoreMessage: string | null;
+  transactionsCount: number;
 }

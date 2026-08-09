@@ -44,7 +44,7 @@ export async function GET() {
   }
 
   try {
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const profile = await FinancialProfile.findOne();
 
     if (!profile) {
@@ -85,7 +85,7 @@ export async function PATCH(request: Request) {
         );
       }
 
-      await connectDB();
+      await connectDB({ runMonthlyRollover: true });
       const user = await User.findOne().select('+passwordHash');
 
       if (!user) {
@@ -119,7 +119,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const profile = await FinancialProfile.findOne();
 
     if (!profile) {

@@ -1,7 +1,20 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { Category } from '@/models/Category';
+
+const categorySchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  type: z.enum(['income', 'expense']),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'El color debe tener formato #rrggbb')
+    .optional(),
+  icon: z.string().trim().max(50).optional(),
+  isDefault: z.boolean().default(false),
+  behavior: z.enum(['fijo', 'variable']).optional(),
+});
 
 export async function GET() {
   if (!(await getSessionUserId())) {
@@ -9,7 +22,7 @@ export async function GET() {
   }
 
   try {
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const categories = await Category.find().sort({ name: 1 });
     const sortedCategories = categories
       .slice()
@@ -39,10 +52,26 @@ export async function POST(request: Request) {
   }
 
   try {
-    await connectDB();
-    const body = await request.json();
+    await connectDB({ runMonthlyRollover: true });
+    const body: unknown = await request.json();
+    const parsed = categorySchema.safeParse(body);
 
-    const category = await Category.create(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? 'La categoría no es válida' },
+        { status: 400 }
+      );
+    }
+
+    const data = parsed.data;
+    const { behavior, ...rest } = data;
+    const category = await Category.create({
+      ...rest,
+      // Las categorías de gasto sin comportamiento explícito son variables por defecto.
+      ...(data.type === 'expense'
+        ? { behavior: behavior ?? 'variable' }
+        : {}),
+    });
     return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
     console.error('Error creating category:', error);

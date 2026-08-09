@@ -24,7 +24,7 @@ export async function GET() {
   }
 
   try {
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     return NextResponse.json(await getGoalsWithProgress());
   } catch (error: unknown) {
     console.error('Error obteniendo metas:', error);
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const goal = await SavingsGoal.create({
       ...parsed.data,
       deadline: parsed.data.deadline

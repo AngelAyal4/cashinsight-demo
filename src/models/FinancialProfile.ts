@@ -59,9 +59,15 @@ const financialProfileSchema = new Schema<IFinancialProfileDocument>(
       type: Boolean,
       default: false,
     },
+    activeMonth: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
+
+financialProfileSchema.index({ activeMonth: 1 });
 
 export const FinancialProfile: Model<IFinancialProfileDocument> =
   mongoose.models.FinancialProfile ||

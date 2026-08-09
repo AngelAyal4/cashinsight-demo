@@ -48,6 +48,11 @@ const transactionSchema = new Schema<ITransactionDocument>(
       type: Boolean,
       default: false,
     },
+    archived: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -57,9 +62,9 @@ const transactionSchema = new Schema<ITransactionDocument>(
 );
 
 // Indexes for common queries
-transactionSchema.index({ date: -1 });
-transactionSchema.index({ type: 1, date: -1 });
-transactionSchema.index({ category: 1 });
+transactionSchema.index({ date: -1, archived: 1 });
+transactionSchema.index({ type: 1, date: -1, archived: 1 });
+transactionSchema.index({ category: 1, archived: 1 });
 transactionSchema.index({ goal: 1, date: -1 });
 
 export const Transaction: Model<ITransactionDocument> =

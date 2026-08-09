@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { calculateFinancialPlan } from '@/lib/financial-plan';
+import { getMonthKey } from '@/lib/monthly-date';
 import { FinancialProfile } from '@/models/FinancialProfile';
 import { SavingsGoal } from '@/models/SavingsGoal';
 
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
 
     const existingProfile = await FinancialProfile.findOne();
     if (existingProfile?.onboardingCompleted) {
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
         baseCurrency: data.baseCurrency,
         savingsCurrency: data.savingsCurrency,
         onboardingCompleted: true,
+        activeMonth: getMonthKey(),
       },
       { returnDocument: 'after', upsert: true, runValidators: true }
     );

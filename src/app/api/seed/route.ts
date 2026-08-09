@@ -5,16 +5,16 @@ import { Category } from '@/models/Category';
 import { Transaction } from '@/models/Transaction';
 
 const defaultCategories = [
-  { name: 'Alimentación', type: 'expense', color: '#f97316', icon: 'utensils', isDefault: true },
-  { name: 'Transporte', type: 'expense', color: '#0ea5e9', icon: 'car', isDefault: true },
-  { name: 'Vivienda', type: 'expense', color: '#8b5cf6', icon: 'home', isDefault: true },
-  { name: 'Ocio', type: 'expense', color: '#ec4899', icon: 'film', isDefault: true },
-  { name: 'Salud', type: 'expense', color: '#14b8a6', icon: 'heart', isDefault: true },
-  { name: 'Servicios', type: 'expense', color: '#64748b', icon: 'bolt', isDefault: true },
-  { name: 'Impuesto', type: 'expense', color: '#f59e0b', icon: 'receipt', isDefault: true },
-  { name: 'Tarjeta', type: 'expense', color: '#6366f1', icon: 'card', isDefault: true },
-  { name: 'Prestamos', type: 'expense', color: '#a21caf', icon: 'banknote', isDefault: true },
-  { name: 'Otro', type: 'expense', color: '#94a3b8', icon: 'dots', isDefault: true },
+  { name: 'Alimentación', type: 'expense', color: '#f97316', icon: 'utensils', isDefault: true, behavior: 'variable' },
+  { name: 'Transporte', type: 'expense', color: '#0ea5e9', icon: 'car', isDefault: true, behavior: 'variable' },
+  { name: 'Vivienda', type: 'expense', color: '#8b5cf6', icon: 'home', isDefault: true, behavior: 'fijo' },
+  { name: 'Ocio', type: 'expense', color: '#ec4899', icon: 'film', isDefault: true, behavior: 'variable' },
+  { name: 'Salud', type: 'expense', color: '#14b8a6', icon: 'heart', isDefault: true, behavior: 'variable' },
+  { name: 'Servicios', type: 'expense', color: '#64748b', icon: 'bolt', isDefault: true, behavior: 'fijo' },
+  { name: 'Impuesto', type: 'expense', color: '#f59e0b', icon: 'receipt', isDefault: true, behavior: 'fijo' },
+  { name: 'Tarjeta', type: 'expense', color: '#6366f1', icon: 'card', isDefault: true, behavior: 'fijo' },
+  { name: 'Prestamos', type: 'expense', color: '#a21caf', icon: 'banknote', isDefault: true, behavior: 'fijo' },
+  { name: 'Otro', type: 'expense', color: '#94a3b8', icon: 'dots', isDefault: true, behavior: 'variable' },
   { name: 'Sueldo', type: 'income', color: '#22c55e', icon: 'briefcase', isDefault: true },
   { name: 'Freelance', type: 'income', color: '#84cc16', icon: 'laptop', isDefault: true },
   { name: 'Otro', type: 'income', color: '#94a3b8', icon: 'dots', isDefault: true },
@@ -26,7 +26,7 @@ export async function POST() {
   }
 
   try {
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
 
     const existingCategories = await Category.countDocuments();
     if (existingCategories > 0) {

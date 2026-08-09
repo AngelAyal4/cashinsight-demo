@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
+import { getMonthRange } from '@/lib/monthly-date';
 import { Category } from '@/models/Category';
+import { FinancialProfile } from '@/models/FinancialProfile';
 import { SavingsGoal } from '@/models/SavingsGoal';
 import { Transaction } from '@/models/Transaction';
 
@@ -23,6 +25,19 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
+async function shouldArchive(date: Date): Promise<boolean> {
+  const profile = await FinancialProfile.findOne()
+    .select('activeMonth')
+    .lean();
+
+  if (!profile?.activeMonth) {
+    return false;
+  }
+
+  const { start } = getMonthRange(profile.activeMonth);
+  return date.getTime() < start.getTime();
+}
+
 export async function DELETE(_request: Request, context: RouteContext) {
   if (!(await getSessionUserId())) {
     return unauthorizedResponse();
@@ -35,11 +50,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'El identificador no es válido' }, { status: 400 });
     }
 
-    await connectDB();
-    const deleted = await Transaction.findByIdAndDelete(id);
+    await connectDB({ runMonthlyRollover: true });
+    const deleted = await Transaction.findOneAndDelete({
+      _id: id,
+      archived: { $ne: true },
+    });
 
     if (!deleted) {
-      return NextResponse.json({ error: 'La transacción no existe' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'La transacción no existe o ya fue archivada' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ message: 'Transacción eliminada' });
@@ -69,11 +90,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    await connectDB();
-    const transaction = await Transaction.findById(id);
+    await connectDB({ runMonthlyRollover: true });
+    const transaction = await Transaction.findOne({
+      _id: id,
+      archived: { $ne: true },
+    });
 
     if (!transaction) {
-      return NextResponse.json({ error: 'La transacción no existe' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'La transacción no existe o ya fue archivada' },
+        { status: 404 }
+      );
     }
 
     const data = parsed.data;
@@ -111,7 +138,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     transaction.type = nextType;
     if (data.amount !== undefined) transaction.amount = data.amount;
     if (data.description !== undefined) transaction.description = data.description;
-    if (data.date !== undefined) transaction.date = data.date;
+    if (data.date !== undefined) {
+      transaction.date = data.date;
+      transaction.archived = await shouldArchive(data.date);
+    }
     if (data.notes !== undefined) transaction.notes = data.notes;
     if (data.isRecurring !== undefined) transaction.isRecurring = data.isRecurring;
 

@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { connectDB } from '@/lib/db';
 import { AUTH_COOKIE_NAME, signSessionToken } from '@/lib/session';
 import { hashPassword } from '@/lib/password';
+import { getMonthKey } from '@/lib/monthly-date';
 import { User } from '@/models/User';
 import { Category } from '@/models/Category';
 import { SavingsGoal } from '@/models/SavingsGoal';
@@ -37,6 +38,9 @@ import { POST as onboardingPOST } from '@/app/api/onboarding/route';
 import { GET as profileGET, PATCH as profilePATCH } from '@/app/api/profile/route';
 import { POST as seedPOST } from '@/app/api/seed/route';
 import { GET as summaryGET } from '@/app/api/reports/summary/route';
+import { GET as reportsGET } from '@/app/api/reports/route';
+import { GET as reportDetailGET } from '@/app/api/reports/[monthKey]/route';
+import { MonthlySnapshot } from '@/models/MonthlySnapshot';
 
 const { cookieJar } = vi.hoisted(() => ({ cookieJar: new Map<string, string>() }));
 
@@ -77,6 +81,7 @@ async function cleanDatabase(): Promise<void> {
     SavingsGoal.deleteMany({}),
     Category.deleteMany({}),
     Budget.deleteMany({}),
+    MonthlySnapshot.deleteMany({}),
   ]);
 }
 
@@ -342,6 +347,53 @@ describe('API de transacciones (CRUD)', () => {
     );
   });
 
+  it('archiva transacciones atrasadas y las oculta de edición y listado', async () => {
+    const category = await categoryId('Alimentación', 'expense');
+    await FinancialProfile.create({
+      name: 'Atrasado',
+      monthlyIncome: 100000,
+      incomeAccuracy: 'exact',
+      fixedExpenses: 0,
+      variableExpenses: 0,
+      emergencyFundMonths: 1,
+      baseCurrency: 'ARS',
+      savingsCurrency: 'ARS',
+      onboardingCompleted: true,
+      activeMonth: getMonthKey(),
+    });
+
+    const created = await transactionsPOST(
+      jsonRequest(`${API_URL}/api/transactions`, 'POST', {
+        amount: 500,
+        description: 'Compra vieja',
+        type: 'expense',
+        category,
+        date: '2000-01-15',
+      })
+    );
+    expect(created.status).toBe(201);
+    const createdBody = await bodyOf(created);
+    expect(createdBody.archived).toBe(true);
+    const id = String(createdBody._id);
+
+    const list = await transactionsGET(jsonRequest(`${API_URL}/api/transactions`));
+    expect(list.status).toBe(200);
+    const transactions = (await list.json()) as { _id: string }[];
+    expect(transactions.some((tx) => tx._id === id)).toBe(false);
+
+    const patch = await transactionPATCH(
+      jsonRequest(`${API_URL}/api/transactions/${id}`, 'PATCH', { amount: 900 }),
+      routeContext(id)
+    );
+    expect(patch.status).toBe(404);
+
+    const del = await transactionDELETE(
+      jsonRequest(`${API_URL}/api/transactions/${id}`, 'DELETE'),
+      routeContext(id)
+    );
+    expect(del.status).toBe(404);
+  });
+
   it('rechaza una transacción cuya categoría no coincide con el tipo', async () => {
     const category = await categoryId('Sueldo', 'income');
 
@@ -553,11 +605,25 @@ describe('API de presupuestos (CRUD)', () => {
     return `${date.getFullYear()}-${month}-${day}`;
   };
 
+  const currentMonthDate = (day: number): Date => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), day, 12);
+  };
+
+  const currentMonthStart = (): string => isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const currentMonthEnd = (): string => {
+    const now = new Date();
+    return isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  };
+
   beforeEach(async () => {
     await cleanDatabase();
     cookieJar.clear();
     await createUserWithSession();
     await seedPOST();
+    // El seed crea transacciones en el mes actual: se eliminan para que los
+    // casos usen sus propios movimientos con montos deterministas.
+    await Transaction.deleteMany({});
   });
 
   async function categoryIdOf(name: string): Promise<string> {
@@ -571,8 +637,8 @@ describe('API de presupuestos (CRUD)', () => {
   async function createBudget(
     amount: number,
     category: string,
-    startDate = '2026-01-01',
-    endDate = '2026-01-31',
+    startDate = currentMonthStart(),
+    endDate = currentMonthEnd(),
     period = 'monthly'
   ): Promise<Response> {
     return budgetsPOST(
@@ -588,7 +654,7 @@ describe('API de presupuestos (CRUD)', () => {
 
   it('devuelve 401 sin sesión', async () => {
     cookieJar.clear();
-    expect((await budgetsGET()).status).toBe(401);
+    expect((await budgetsGET(jsonRequest(`${API_URL}/api/budgets`))).status).toBe(401);
   });
 
   it('crea un presupuesto y lo devuelve con progreso inicial', async () => {
@@ -621,26 +687,31 @@ describe('API de presupuestos (CRUD)', () => {
         description: 'Supermercado',
         category: alimentacion,
         type: 'expense',
-        date: new Date('2026-01-10T12:00:00'),
+        date: currentMonthDate(15),
       },
       {
         amount: 900,
         description: 'Fuera del rango',
         category: alimentacion,
         type: 'expense',
-        date: new Date('2026-02-03T12:00:00'),
+        date: new Date(
+          currentMonthDate(15).getFullYear(),
+          currentMonthDate(15).getMonth() - 1,
+          currentMonthDate(15).getDate(),
+          12
+        ),
       },
       {
         amount: 300,
         description: 'Otra categoría',
         category: transporte,
         type: 'expense',
-        date: new Date('2026-01-05T12:00:00'),
+        date: currentMonthDate(5),
       },
     ]);
 
     const aggregateSpy = vi.spyOn(Budget, 'aggregate');
-    const list = await budgetsGET();
+    const list = await budgetsGET(jsonRequest(`${API_URL}/api/budgets`));
     expect(list.status).toBe(200);
     expect(aggregateSpy).toHaveBeenCalledTimes(1);
     aggregateSpy.mockRestore();
@@ -683,6 +754,53 @@ describe('API de presupuestos (CRUD)', () => {
     expect(await bodyOf(missing)).toHaveProperty('error');
   });
 
+  it('rechaza límites para categorías fijas', async () => {
+    const fixed = await categoryIdOf('Vivienda');
+
+    const response = await createBudget(1000, fixed);
+    expect(response.status).toBe(400);
+    expect(await bodyOf(response)).toHaveProperty('error');
+  });
+
+  it('filtra por comportamiento variable o fijo', async () => {
+    const variable = await categoryIdOf('Alimentación');
+    const fixedCat = await categoryIdOf('Vivienda');
+    await createBudget(1000, variable);
+    // Los fijos no se crean por API: se inserta uno directo para el filtro.
+    await Budget.create({
+      category: fixedCat,
+      amount: 2000,
+      period: 'monthly',
+      startDate: new Date(`${currentMonthStart()}T00:00:00`),
+      endDate: new Date(`${currentMonthEnd()}T23:59:59`),
+    });
+
+    const all = await budgetsGET(jsonRequest(`${API_URL}/api/budgets`));
+    expect(all.status).toBe(200);
+    expect((await all.json()) as unknown[]).toHaveLength(2);
+
+    const onlyVariable = await budgetsGET(
+      jsonRequest(`${API_URL}/api/budgets?behavior=variable`)
+    );
+    expect(onlyVariable.status).toBe(200);
+    const variableBudgets = (await onlyVariable.json()) as { category: { name: string } }[];
+    expect(variableBudgets).toHaveLength(1);
+    expect(variableBudgets[0].category.name).toBe('Alimentación');
+
+    const onlyFixed = await budgetsGET(
+      jsonRequest(`${API_URL}/api/budgets?behavior=fijo`)
+    );
+    expect(onlyFixed.status).toBe(200);
+    const fixedBudgets = (await onlyFixed.json()) as { category: { name: string } }[];
+    expect(fixedBudgets).toHaveLength(1);
+    expect(fixedBudgets[0].category.name).toBe('Vivienda');
+
+    const bad = await budgetsGET(
+      jsonRequest(`${API_URL}/api/budgets?behavior=raro`)
+    );
+    expect(bad.status).toBe(400);
+  });
+
   it('rechaza fechas incoherentes o mal formateadas', async () => {
     const category = await categoryIdOf('Alimentación');
 
@@ -703,7 +821,7 @@ describe('API de presupuestos (CRUD)', () => {
       description: 'Mercado',
       category,
       type: 'expense',
-      date: new Date('2026-01-10T12:00:00'),
+      date: currentMonthDate(10),
     });
 
     const missing = await budgetPATCH(
@@ -733,7 +851,8 @@ describe('API de presupuestos (CRUD)', () => {
 
     const badDates = await budgetPATCH(
       jsonRequest(`${API_URL}/api/budgets/${id}`, 'PATCH', {
-        startDate: '2026-02-01',
+        startDate: '2035-01-01',
+        endDate: '2030-01-01',
       }),
       routeContext(id)
     );
@@ -783,7 +902,7 @@ describe('API de presupuestos (CRUD)', () => {
     await createBudget(1000, category);
     await Category.findByIdAndDelete(category);
 
-    const list = await budgetsGET();
+    const list = await budgetsGET(jsonRequest(`${API_URL}/api/budgets`));
     expect(list.status).toBe(200);
     expect((await list.json()) as unknown[]).toHaveLength(0);
   });
@@ -978,5 +1097,126 @@ describe('API de reportes (resumen del dashboard)', () => {
     expect(summary.financialScore).toBeNull();
     expect(summary.goals).toEqual([]);
     expect(summary.recentTransactions).toHaveLength(5);
+    expect(summary.activeMonth).toBe(getMonthKey());
+    expect(summary.monthLabel).toBeTypeOf('string');
+    expect(summary.daysRemaining).toBeGreaterThan(0);
+    // Gastos variables del seed: Alimentación + Transporte + Ocio + Salud.
+    expect(summary.totalFixed).toBe(0);
+    expect(summary.totalVariable).toBe(41700);
+    expect(summary.availableToSpend).toBe(191300);
+    expect(summary.perDayRemaining).toBeCloseTo(
+      191300 / (summary.daysRemaining as number),
+      5
+    );
+    expect(summary.savingsRate).toBe(0);
+  });
+});
+
+describe('API de reportes (historial de snapshots mensuales)', () => {
+  beforeEach(async () => {
+    await cleanDatabase();
+    cookieJar.clear();
+  });
+
+  it('devuelve 401 sin sesión', async () => {
+    const response = await reportsGET();
+    expect(response.status).toBe(401);
+  });
+
+  it('lista vacía sin snapshots', async () => {
+    await createUserWithSession();
+    const response = await reportsGET();
+    expect(response.status).toBe(200);
+    expect((await response.json()) as unknown[]).toHaveLength(0);
+  });
+
+  it('rechaza meses mal formateados en el detalle', async () => {
+    await createUserWithSession();
+    const response = await reportDetailGET(
+      jsonRequest(`${API_URL}/api/reports/enero`),
+      { params: Promise.resolve({ monthKey: 'enero' }) }
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it('rechaza meses fuera del calendario en el detalle', async () => {
+    await createUserWithSession();
+    const response = await reportDetailGET(
+      jsonRequest(`${API_URL}/api/reports/2026-13`),
+      { params: Promise.resolve({ monthKey: '2026-13' }) }
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it('devuelve 404 si no existe un snapshot para el mes', async () => {
+    await createUserWithSession();
+    const response = await reportDetailGET(
+      jsonRequest(`${API_URL}/api/reports/2000-01`),
+      { params: Promise.resolve({ monthKey: '2000-01' }) }
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it('lista snapshots ordenados y devuelve el detalle completo', async () => {
+    await createUserWithSession();
+    await MonthlySnapshot.create({
+      monthKey: '2026-07',
+      currency: 'ARS',
+      range: { start: '2026-07-01T03:00:00.000Z', end: '2026-08-01T03:00:00.000Z' },
+      income: 233000,
+      expenses: 83700,
+      savings: 0,
+      balance: 149300,
+      totalFixed: 42000,
+      totalVariable: 41700,
+      expensesByCategory: [],
+      budgetCompliance: [],
+      goals: [],
+      financialScore: null,
+      scoreMessage: null,
+      transactionsCount: 10,
+      metrics: { topSpendingDay: null, averageDailyExpense: 2699.99 },
+    });
+    await MonthlySnapshot.create({
+      monthKey: '2026-06',
+      currency: 'ARS',
+      range: { start: '2026-06-01T03:00:00.000Z', end: '2026-07-01T03:00:00.000Z' },
+      income: 180000,
+      expenses: 90000,
+      savings: 10000,
+      balance: 80000,
+      totalFixed: 40000,
+      totalVariable: 50000,
+      expensesByCategory: [],
+      budgetCompliance: [],
+      goals: [],
+      financialScore: 78.5,
+      scoreMessage: 'Buen score',
+      transactionsCount: 8,
+      metrics: {
+        topSpendingDay: { date: '2026-06-15', amount: 12000 },
+        averageDailyExpense: 3000,
+      },
+    });
+
+    const list = await reportsGET();
+    expect(list.status).toBe(200);
+    const reports = (await list.json()) as { monthKey: string }[];
+    expect(reports).toHaveLength(2);
+    expect(reports[0].monthKey).toBe('2026-07');
+    expect(reports[1].monthKey).toBe('2026-06');
+
+    const detail = await reportDetailGET(
+      jsonRequest(`${API_URL}/api/reports/2026-06`),
+      { params: Promise.resolve({ monthKey: '2026-06' }) }
+    );
+    expect(detail.status).toBe(200);
+    const snapshot = (await detail.json()) as Record<string, unknown>;
+    expect(snapshot.monthKey).toBe('2026-06');
+    expect(snapshot.income).toBe(180000);
+    expect(snapshot.financialScore).toBe(78.5);
+    expect(snapshot.metrics).toEqual(
+      expect.objectContaining({ topSpendingDay: { date: '2026-06-15', amount: 12000 } })
+    );
   });
 });

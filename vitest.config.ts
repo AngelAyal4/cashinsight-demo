@@ -7,12 +7,18 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     setupFiles: ['src/test/setup.ts'],
     testTimeout: 30000,
+    // Los archivos de test comparten la misma base MongoDB: corren en serie.
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       include: [
         'src/lib/password.ts',
         'src/lib/session.ts',
         'src/proxy.ts',
+        'src/lib/monthly-date.ts',
+        'src/lib/monthly-cycle.ts',
+        'src/lib/financial-metrics.ts',
+        'src/lib/budget-progress.ts',
         'src/app/api/**/route.ts',
       ],
       thresholds: {

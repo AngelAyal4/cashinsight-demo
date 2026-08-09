@@ -7,8 +7,8 @@ import { BudgetFormModal } from '@/components/budgets/budget-form-modal';
 import { useBudgets } from '@/hooks/use-budgets';
 import type { BudgetProgress, CurrencyCode } from '@/types';
 
-export default function BudgetsPage() {
-  const { budgets, loading, error, retry } = useBudgets();
+export default function ControlPage() {
+  const { budgets, loading, error, retry } = useBudgets('variable');
   const [currency, setCurrency] = useState<CurrencyCode>('ARS');
   const [editing, setEditing] = useState<BudgetProgress | null>(null);
   const [deleting, setDeleting] = useState<BudgetProgress | null>(null);
@@ -55,7 +55,7 @@ export default function BudgetsPage() {
         const message =
           typeof result === 'object' && result !== null && 'error' in result
             ? String(result.error)
-            : 'No se pudo eliminar el presupuesto';
+            : 'No se pudo eliminar el límite';
         throw new Error(message);
       }
 
@@ -74,15 +74,16 @@ export default function BudgetsPage() {
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-bold uppercase tracking-wider text-lime">
-              Límites de gasto
+              Control
             </p>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Presupuestos</h1>
-            <p className="mt-2 text-sm font-medium text-ink/70">
-              Controlá cuánto gastás por categoría según el período que elijas.
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Control</h1>
+            <p className="mt-2 max-w-2xl text-sm font-medium text-ink/70">
+              Límites para tus gastos variables: ocio, comida, farmacia y
+              compras del día. Los gastos fijos se gestionan desde Principal.
             </p>
           </div>
           <button type="button" onClick={() => setFormOpen(true)} className="btn-brutal">
-            Nuevo presupuesto
+            Nuevo límite
           </button>
         </div>
 
@@ -105,11 +106,12 @@ export default function BudgetsPage() {
         ) : budgets.length === 0 ? (
           <section className="mt-8 border-2 border-ink bg-blue-600 p-6 text-white shadow-[4px_4px_0_0_#111111]">
             <h2 className="font-extrabold uppercase tracking-tight">
-              Todavía no creaste presupuestos
+              Todavía no creaste límites variables
             </h2>
             <p className="mt-1 text-sm font-medium">
-              Definí un límite mensual, semanal o anual por categoría de gasto y seguí tu
-              progreso desde el dashboard.
+              Definí un tope mensual, semanal o anual para tus categorías de
+              gasto variable y seguí tu progreso desde Principal. Los límites
+              persisten entre meses: se reinicia el gasto, no el límite.
             </p>
             <button
               type="button"
@@ -156,15 +158,15 @@ export default function BudgetsPage() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={`Eliminar presupuesto de ${deleting.category.name}`}
+            aria-label={`Eliminar límite de ${deleting.category.name}`}
             className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
           >
             <div className="card-brutal w-full max-w-md p-5 sm:p-6">
               <h2 className="text-xl font-extrabold uppercase tracking-tight">
-                Eliminar presupuesto
+                Eliminar límite
               </h2>
               <p className="mt-3 text-sm font-medium text-ink/70">
-                ¿Querés eliminar el presupuesto de{' '}
+                ¿Querés eliminar el límite de{' '}
                 <strong>{deleting.category.name}</strong>? El gasto ya registrado se mantiene.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">

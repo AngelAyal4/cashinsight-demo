@@ -19,6 +19,7 @@ if (!global.mongoose) {
 }
 
 let budgetIndexesSynced = false;
+let categoryBehaviorMigrated = false;
 
 async function syncBudgetIndexes(): Promise<void> {
   if (budgetIndexesSynced) {
@@ -32,25 +33,51 @@ async function syncBudgetIndexes(): Promise<void> {
   budgetIndexesSynced = true;
 }
 
-export async function connectDB(): Promise<typeof mongoose> {
-  if (cached.conn) {
-    return cached.conn;
+/**
+ * Migración única: categorías de gasto creadas antes del campo `behavior`
+ * pasan a `variable` (comportamiento por defecto de los gastos personalizados).
+ */
+async function migrateCategoryBehavior(): Promise<void> {
+  if (categoryBehaviorMigrated) {
+    return;
   }
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      bufferCommands: false,
-    });
+  const { Category } = await import('@/models/Category');
+  await Category.updateMany(
+    { type: 'expense', behavior: { $exists: false } },
+    { $set: { behavior: 'variable' } }
+  );
+  categoryBehaviorMigrated = true;
+}
+
+export interface ConnectDBOptions {
+  /** Ejecuta el rollover mensual post-conexión (solo rutas que ya validaron sesión). */
+  runMonthlyRollover?: boolean;
+}
+
+export async function connectDB(options: ConnectDBOptions = {}): Promise<typeof mongoose> {
+  if (!cached.conn) {
+    if (!cached.promise) {
+      cached.promise = mongoose.connect(MONGODB_URI, {
+        bufferCommands: false,
+      });
+    }
+
+    try {
+      cached.conn = await cached.promise;
+      await syncBudgetIndexes();
+      await migrateCategoryBehavior();
+      console.log('✅ MongoDB conectado');
+    } catch (error) {
+      cached.promise = null;
+      console.error('❌ Error conectando a MongoDB:', error);
+      throw error;
+    }
   }
 
-  try {
-    cached.conn = await cached.promise;
-    await syncBudgetIndexes();
-    console.log('✅ MongoDB conectado');
-  } catch (error) {
-    cached.promise = null;
-    console.error('❌ Error conectando a MongoDB:', error);
-    throw error;
+  if (options.runMonthlyRollover) {
+    const { runMonthlyRollover } = await import('@/lib/monthly-cycle');
+    await runMonthlyRollover();
   }
 
   return cached.conn;

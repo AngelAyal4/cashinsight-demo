@@ -29,11 +29,20 @@ interface MovementFormProps {
   editing: ITransaction | null;
   onSaved: () => void;
   onCancel: () => void;
+  initialType?: TransactionKind;
 }
 
-export function MovementForm({ goals, editing, onSaved, onCancel }: MovementFormProps) {
+export function MovementForm({
+  goals,
+  editing,
+  onSaved,
+  onCancel,
+  initialType,
+}: MovementFormProps) {
   const [categories, setCategories] = useState<ICategory[]>([]);
-  const [type, setType] = useState<TransactionKind>(editing?.type ?? 'expense');
+  const [type, setType] = useState<TransactionKind>(
+    editing?.type ?? initialType ?? 'expense'
+  );
   const [amount, setAmount] = useState(editing?.amount ?? 0);
   const [description, setDescription] = useState(editing?.description ?? '');
   const [categoryId, setCategoryId] = useState(

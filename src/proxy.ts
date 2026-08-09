@@ -3,12 +3,28 @@ import { AUTH_COOKIE_NAME, verifySessionToken } from '@/lib/session';
 
 const PUBLIC_API_PREFIX = '/api/auth';
 
-const PROTECTED_PAGES = ['/', '/metas', '/presupuestos', '/perfil', '/onboarding'];
+const PROTECTED_PAGES = [
+  '/',
+  '/metas',
+  '/control',
+  '/report',
+  '/help',
+  '/perfil',
+  '/onboarding',
+];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const sessionValid = token ? verifySessionToken(token) !== null : false;
+
+  // Redirección permanente: /presupuestos pasó a llamarse /control.
+  if (pathname === '/presupuestos' || pathname.startsWith('/presupuestos/')) {
+    return NextResponse.redirect(
+      new URL('/control', request.url),
+      301
+    );
+  }
 
   if (pathname.startsWith('/api/')) {
     if (pathname.startsWith(PUBLIC_API_PREFIX)) {

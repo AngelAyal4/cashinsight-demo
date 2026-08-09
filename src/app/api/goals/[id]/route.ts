@@ -22,7 +22,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'El identificador no es válido' }, { status: 400 });
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const deleted = await SavingsGoal.findByIdAndDelete(id);
 
     if (!deleted) {

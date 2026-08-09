@@ -4,7 +4,9 @@ import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { Category } from '@/models/Category';
 import { SavingsGoal } from '@/models/SavingsGoal';
 import { Transaction } from '@/models/Transaction';
+import { FinancialProfile } from '@/models/FinancialProfile';
 import { connectDB } from '@/lib/db';
+import { getMonthKey, getMonthRange } from '@/lib/monthly-date';
 
 const objectIdSchema = z
   .string()
@@ -46,6 +48,20 @@ const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
+/** Las transacciones con fecha anterior al mes activo se guardan archivadas. */
+async function resolveArchived(date: Date): Promise<boolean> {
+  const profile = await FinancialProfile.findOne()
+    .select('activeMonth')
+    .lean();
+
+  if (!profile?.activeMonth) {
+    return false;
+  }
+
+  const { start } = getMonthRange(profile.activeMonth);
+  return date.getTime() < start.getTime();
+}
+
 export async function GET(request: Request) {
   if (!(await getSessionUserId())) {
     return unauthorizedResponse();
@@ -66,20 +82,25 @@ export async function GET(request: Request) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
+    const profile = await FinancialProfile.findOne().select('activeMonth').lean();
+    const activeMonth = profile?.activeMonth ?? getMonthKey();
     const { type, month, limit } = parsedQuery.data;
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      archived: { $ne: true },
+    };
 
     if (type) {
       filter.type = type;
     }
 
     if (month) {
-      const [year, mon] = month.split('-').map(Number);
-      filter.date = {
-        $gte: new Date(year, mon - 1, 1),
-        $lte: new Date(year, mon, 0, 23, 59, 59),
-      };
+      const range = getMonthRange(month);
+      filter.date = { $gte: range.start, $lt: range.end };
+    } else {
+      // Listado del ciclo activo: no muestra meses cerrados.
+      const { start, end } = getMonthRange(activeMonth);
+      filter.date = { $gte: start, $lt: end };
     }
 
     const transactions = await Transaction.find(filter)
@@ -114,7 +135,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const data = parsed.data;
 
     if (data.type === 'saving' || data.type === 'withdrawal') {
@@ -144,9 +165,11 @@ export async function POST(request: Request) {
       }
     }
 
+    const date = data.date ?? new Date();
     const transaction = await Transaction.create({
       ...data,
-      date: data.date ?? new Date(),
+      date,
+      archived: await resolveArchived(date),
     });
     const populated = await transaction
       .populate('category', 'name color icon')

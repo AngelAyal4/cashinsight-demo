@@ -20,6 +20,10 @@ const budgetSchema = z.object({
   endDate: z.string().regex(datePattern, 'La fecha de fin no es válida'),
 });
 
+const behaviorSchema = z.object({
+  behavior: z.enum(['fijo', 'variable']).optional(),
+});
+
 function budgetRange(data: {
   startDate: string;
   endDate: string;
@@ -43,14 +47,28 @@ function isDuplicateKeyError(error: unknown): boolean {
   );
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!(await getSessionUserId())) {
     return unauthorizedResponse();
   }
 
   try {
-    await connectDB();
-    return NextResponse.json(await getBudgetsWithProgress());
+    await connectDB({ runMonthlyRollover: true });
+    const url = new URL(request.url);
+    const parsedQuery = behaviorSchema.safeParse({
+      behavior: url.searchParams.get('behavior') ?? undefined,
+    });
+
+    if (!parsedQuery.success) {
+      return NextResponse.json(
+        { error: 'El filtro de comportamiento no es válido' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      await getBudgetsWithProgress(false, parsedQuery.data.behavior)
+    );
   } catch (error: unknown) {
     console.error('Error obteniendo presupuestos:', error);
     return NextResponse.json(
@@ -84,7 +102,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const category = await Category.findById(parsed.data.category);
 
     if (!category) {
@@ -97,6 +115,16 @@ export async function POST(request: Request) {
     if (category.type !== 'expense') {
       return NextResponse.json(
         { error: 'Solo se pueden presupuestar categorías de gasto' },
+        { status: 400 }
+      );
+    }
+
+    if (category.behavior === 'fijo') {
+      return NextResponse.json(
+        {
+          error:
+            'Los límites de Control son solo para gastos variables; los fijos se gestionan en Principal',
+        },
         { status: 400 }
       );
     }

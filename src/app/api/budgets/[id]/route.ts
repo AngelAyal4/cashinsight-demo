@@ -50,7 +50,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const budget = await Budget.findById(id);
 
     if (!budget) {
@@ -120,7 +120,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       );
     }
 
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
     const deleted = await Budget.findByIdAndDelete(id);
 
     if (!deleted) {

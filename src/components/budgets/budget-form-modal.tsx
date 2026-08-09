@@ -91,7 +91,7 @@ export function BudgetFormModal({ budget, onClose, onSaved }: BudgetFormModalPro
         }
 
         const expenseCategories = (result as ICategory[]).filter(
-          (item) => item.type === 'expense'
+          (item) => item.type === 'expense' && item.behavior !== 'fijo'
         );
         setCategories(expenseCategories);
 
@@ -188,7 +188,7 @@ export function BudgetFormModal({ budget, onClose, onSaved }: BudgetFormModalPro
               className="form-input"
             >
               {categories.length === 0 ? (
-                <option value="">No hay categorías de gasto</option>
+                <option value="">No hay categorías de gasto variable</option>
               ) : null}
               {categories.map((item) => (
                 <option key={String(item._id)} value={String(item._id)}>

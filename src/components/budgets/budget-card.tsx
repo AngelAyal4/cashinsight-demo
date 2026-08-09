@@ -20,14 +20,7 @@ export function BudgetProgressBar({ budget, className }: BudgetProgressBarProps)
         ? 'amber'
         : 'rose';
 
-  return (
-    <ProgressBar
-      value={displayValue}
-      label={`${budget.usagePercent.toFixed(0)}%`}
-      color={color}
-      className={className}
-    />
-  );
+  return <ProgressBar value={displayValue} color={color} className={className} />;
 }
 
 interface BudgetCardProps {
@@ -85,10 +78,15 @@ export function BudgetCard({ budget, currency, onEdit, onDelete }: BudgetCardPro
         </div>
       </div>
 
-      <p className="mt-4 text-sm font-bold text-ink">
-        Gastado {formatCurrency(budget.usedAmount, currency)} de{' '}
-        {formatCurrency(budget.amount, currency)}
-      </p>
+      <div className="mt-4 flex items-end justify-between gap-2">
+        <p className="text-sm font-bold text-ink">
+          Gastado {formatCurrency(budget.usedAmount, currency)} de{' '}
+          {formatCurrency(budget.amount, currency)}
+        </p>
+        <p className="shrink-0 text-sm font-extrabold text-ink">
+          {budget.usagePercent.toFixed(0)}%
+        </p>
+      </div>
       <BudgetProgressBar budget={budget} className="mt-2" />
 
       {budget.status === 'excedido' ? (

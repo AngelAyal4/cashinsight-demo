@@ -6,21 +6,42 @@ import { FinancialProfile } from '@/models/FinancialProfile';
 import { Transaction } from '@/models/Transaction';
 import { getGoalsWithProgress } from '@/lib/goal-progress';
 import { getBudgetsWithProgress } from '@/lib/budget-progress';
+import {
+  computeAvailableToSpend,
+  computeFinancialScore,
+  computePerDayRemaining,
+  computeSavingsRate,
+  computeScoreMessage,
+} from '@/lib/financial-metrics';
+import {
+  getDaysRemainingInMonth,
+  getMonthKey,
+  getMonthLabel,
+  getMonthRange,
+} from '@/lib/monthly-date';
+import type { CategoryBehavior, ExpenseByCategory } from '@/types';
 
-interface TransactionTotal {
+interface TypeTotal {
   _id: 'income' | 'expense' | 'saving' | 'withdrawal';
   total: number;
 }
 
-interface SingleTotal {
-  _id: null;
+interface CategoryRow {
+  _id: string;
+  name: string;
+  color: string;
+  behavior: CategoryBehavior;
   total: number;
 }
 
-interface CategoryExpense {
-  name: string;
-  value: number;
-  color: string;
+interface FacetResult {
+  byType: TypeTotal[];
+  byCategory: CategoryRow[];
+  balType: TypeTotal[];
+}
+
+interface ActiveTotals {
+  byType: TypeTotal[];
 }
 
 export async function GET() {
@@ -29,119 +50,90 @@ export async function GET() {
   }
 
   try {
-    await connectDB();
+    await connectDB({ runMonthlyRollover: true });
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0,
-      23,
-      59,
-      59
-    );
+    const profile = await FinancialProfile.findOne();
+    const activeMonth = profile?.activeMonth ?? getMonthKey();
+    const { start, end } = getMonthRange(activeMonth);
 
-    const [
-      incomeResult,
-      expenseResult,
-      savingResult,
-      withdrawalResult,
-      totals,
-      expensesByCategory,
-      recentTransactions,
-      profile,
-      goals,
-      budgets,
-    ] = await Promise.all([
-      Transaction.aggregate<SingleTotal>([
+    const [facetDocs, activeTotalDocs, recentDocs, goals, budgets] =
+      await Promise.all([
+      Transaction.aggregate<FacetResult>([
+        { $match: { archived: { $ne: true }, date: { $gte: start, $lt: end } } },
         {
-          $match: {
-            type: 'income',
-            date: { $gte: startOfMonth, $lte: endOfMonth },
+          $facet: {
+            byType: [
+              { $group: { _id: '$type', total: { $sum: '$amount' } } },
+            ],
+            byCategory: [
+              { $match: { type: 'expense' } },
+              { $group: { _id: '$category', total: { $sum: '$amount' } } },
+              {
+                $lookup: {
+                  from: 'categories',
+                  localField: '_id',
+                  foreignField: '_id',
+                  as: 'cat',
+                },
+              },
+              { $unwind: '$cat' },
+              {
+                $project: {
+                  _id: 0,
+                  name: '$cat.name',
+                  color: '$cat.color',
+                  behavior: '$cat.behavior',
+                  total: 1,
+                },
+              },
+              { $sort: { total: -1 } },
+            ],
           },
         },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
-      Transaction.aggregate<SingleTotal>([
+      Transaction.aggregate<ActiveTotals>([
+        { $match: { archived: { $ne: true } } },
         {
-          $match: {
-            type: 'expense',
-            date: { $gte: startOfMonth, $lte: endOfMonth },
+          $facet: {
+            byType: [
+              { $group: { _id: '$type', total: { $sum: '$amount' } } },
+            ],
           },
         },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
-      Transaction.aggregate<SingleTotal>([
-        {
-          $match: {
-            type: 'saving',
-            date: { $gte: startOfMonth, $lte: endOfMonth },
-          },
-        },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      Transaction.aggregate<SingleTotal>([
-        {
-          $match: {
-            type: 'withdrawal',
-            date: { $gte: startOfMonth, $lte: endOfMonth },
-          },
-        },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      Transaction.aggregate<TransactionTotal>([
-        { $group: { _id: '$type', total: { $sum: '$amount' } } },
-      ]),
-      Transaction.aggregate<CategoryExpense>([
-        {
-          $match: {
-            type: 'expense',
-            date: { $gte: startOfMonth, $lte: endOfMonth },
-          },
-        },
-        { $group: { _id: '$category', value: { $sum: '$amount' } } },
-        {
-          $lookup: {
-            from: 'categories',
-            localField: '_id',
-            foreignField: '_id',
-            as: 'category',
-          },
-        },
-        { $unwind: '$category' },
-        {
-          $project: {
-            _id: 0,
-            name: '$category.name',
-            value: 1,
-            color: '$category.color',
-          },
-        },
-        { $sort: { value: -1 } },
-      ]),
-      Transaction.find()
+      Transaction.find({
+        archived: { $ne: true },
+        date: { $gte: start, $lt: end },
+      })
         .populate('category', 'name color icon')
         .populate('goal', 'name goalType currency')
         .sort({ date: -1 })
         .limit(5),
-      FinancialProfile.findOne(),
       getGoalsWithProgress(),
       getBudgetsWithProgress(true),
     ]);
 
-    const monthlyIncome = incomeResult[0]?.total || 0;
-    const monthlyExpense = expenseResult[0]?.total || 0;
-    const monthlySavings =
-      (savingResult[0]?.total || 0) - (withdrawalResult[0]?.total || 0);
-    const totalBalance = totals.reduce(
-      (balance, total) =>
-        balance +
-        (total._id === 'income' || total._id === 'withdrawal'
-          ? total.total
-          : -total.total),
-      0
+    const facetRow = facetDocs[0] ?? { byType: [], byCategory: [] };
+    const activeTotalsRow = activeTotalDocs[0] ?? { byType: [] };
+    const recentTransactions = recentDocs;
+
+    const totals = new Map<string, number>(
+      facetRow.byType.map((entry) => [entry._id, entry.total])
     );
+    const monthlyIncome = totals.get('income') ?? 0;
+    const monthlyExpense = totals.get('expense') ?? 0;
+    const monthlySavings =
+      (totals.get('saving') ?? 0) - (totals.get('withdrawal') ?? 0);
+
+    const allTimeTotals = new Map<string, number>(
+      activeTotalsRow.byType.map((entry) => [entry._id, entry.total])
+    );
+    let totalBalance = 0;
+    for (const [type, total] of allTimeTotals) {
+      totalBalance +=
+        type === 'income' || type === 'withdrawal' ? total : -total;
+    }
+
     const plannedSavings = profile
       ? Math.max(
           0,
@@ -152,27 +144,37 @@ export async function GET() {
     const savingsPercentage = profile?.monthlyIncome
       ? Number(((plannedSavings / profile.monthlyIncome) * 100).toFixed(2))
       : 0;
-    const financialScore = profile && monthlyIncome > 0
-      ? Math.round(
-          Math.max(
-            0,
-            100 -
-              (Math.max(
-                0,
-                monthlyExpense - profile.fixedExpenses - profile.variableExpenses
-              ) /
-                monthlyIncome) *
-                100
-          ) * 0.7 +
-            (plannedSavings > 0
-              ? Math.min(100, (monthlySavings / plannedSavings) * 100)
-              : 100) *
-              0.3
-        )
+    const financialScore = profile
+      ? computeFinancialScore({
+          monthlyIncome,
+          monthlyExpense,
+          fixedExpenses: profile.fixedExpenses,
+          variableExpenses: profile.variableExpenses,
+          plannedSavings,
+          monthlySavings,
+        })
       : null;
 
+    const expensesByCategory: ExpenseByCategory[] = facetRow.byCategory.map(
+      (row) => ({ name: row.name, value: row.total, color: row.color })
+    );
+    const totalVariable = facetRow.byCategory
+      .filter((row) => row.behavior === 'variable')
+      .reduce((sum, row) => sum + row.total, 0);
+    const totalFixed = profile?.fixedExpenses ?? 0;
+    const availableToSpend = computeAvailableToSpend(
+      monthlyIncome,
+      totalFixed,
+      totalVariable
+    );
+    const daysRemaining = getDaysRemainingInMonth();
+    const perDayRemaining = computePerDayRemaining(
+      availableToSpend,
+      daysRemaining
+    );
+
     const monthlyBalance = monthlyIncome - monthlyExpense - monthlySavings;
-    const incomeDistribution: CategoryExpense[] = [
+    const incomeDistribution: ExpenseByCategory[] = [
       ...expensesByCategory,
       ...(monthlySavings > 0
         ? [{ name: 'Ahorro del mes', value: monthlySavings, color: '#6366f1' }]
@@ -192,15 +194,20 @@ export async function GET() {
       savingsCapacity,
       savingsPercentage,
       financialScore,
-      scoreMessage:
-        financialScore !== null && financialScore < 70
-          ? 'Revisa tus gastos para poder alcanzar tus metas'
-          : null,
+      scoreMessage: computeScoreMessage(financialScore),
       profile,
       goals,
       budgets,
       incomeDistribution,
       recentTransactions,
+      activeMonth,
+      monthLabel: getMonthLabel(activeMonth),
+      daysRemaining,
+      totalFixed,
+      totalVariable,
+      availableToSpend,
+      perDayRemaining,
+      savingsRate: computeSavingsRate(monthlySavings, monthlyIncome),
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
