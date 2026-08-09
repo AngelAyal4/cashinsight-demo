@@ -4,7 +4,7 @@ import path from 'node:path';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['src/test/setup.ts'],
     testTimeout: 30000,
     // Los archivos de test comparten la misma base MongoDB: corren en serie.
@@ -19,6 +19,7 @@ export default defineConfig({
         'src/lib/monthly-cycle.ts',
         'src/lib/financial-metrics.ts',
         'src/lib/budget-progress.ts',
+        'src/lib/format.ts',
         'src/app/api/**/route.ts',
       ],
       thresholds: {
