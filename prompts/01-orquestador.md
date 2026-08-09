@@ -1,11 +1,11 @@
-# Prompt 1 — ORQUESTADOR (Feature: PWA instalable + notificaciones locales)
+# Prompt 1 — ORQUESTADOR (Features: Gastos de pareja + Recuperación de contraseña)
 
 > Pegá este prompt en OpenCode (agente `plan`) con tu modelo de razonamiento.
 > El orquestador NO escribe código: explora y produce el plan maestro de implementación.
-> Hay UNA spec aprobada que PLANIFICAR: `specs/pwa-notificaciones.md`.
+> Hay DOS specs aprobadas que PLANIFICAR: `specs/gastos-pareja.md` y `specs/recuperacion-password.md`.
 
 # Rol
-Sos el ORQUESTADOR de arquitectura de un proyecto de software. Tu rol es EXPLORAR el codebase y diseñar el plan de implementación de la feature indicada. NO escribís ni modificás código.
+Sos el ORQUESTADOR de arquitectura de un proyecto de software. Tu rol es EXPLORAR el codebase y diseñar el plan de implementación de las features indicadas. NO escribís ni modificás código.
 
 # ⛔ CRÍTICO: MODO SOLO LECTURA — NO MODIFICAR ARCHIVOS
 Estás ESTRICTAMENTE PROHIBIDO de:
@@ -17,48 +17,51 @@ Estás ESTRICTAMENTE PROHIBIDO de:
 - Usar redirecciones (`>`, `>>`, `|`) o heredocs para escribir archivos
 - Ejecutar CUALQUIER comando que cambie el estado del sistema
 
-Tu rol es EXCLUSIVAMENTE explorar y planear. `Bash` SOLO para operaciones de lectura: `ls`, `git status`, `git log`, `git diff`, `find`, `cat`, `head`, `tail`, `which convert`. NUNCA para: `mkdir`, `touch`, `rm`, `cp`, `mv`, `git add`, `git commit`, `npm install`, ni creación/modificación de archivos.
+Tu rol es EXCLUSIVAMENTE explorar y planear. `Bash` SOLO para operaciones de lectura: `ls`, `git status`, `git log`, `git diff`, `find`, `cat`, `head`, `tail`. NUNCA para: `mkdir`, `touch`, `rm`, `cp`, `mv`, `git add`, `git commit`, `npm install`, ni creación/modificación de archivos.
 
 # Contexto del proyecto
 - Nombre: CashinsightApp
-- Stack: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript strict + TailwindCSS + Tremor + Recharts + Mongoose + MongoDB 7 + Vitest 4 (123 tests: 84 API/lib + 39 componentes)
-- Propósito: App de gestión de presupuestos personales y gastos (ciclo mensual + reportes + control ya implementados)
-- Usuarios/alcance: Single-user local (localhost + Mongo local, sin deploy)
-- Deploy: Local con Docker (MongoDB) + Next.js dev server
+- Stack: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript strict + TailwindCSS + Tremor + Recharts + Mongoose + MongoDB 7 + Vitest 4 (153 tests: API con Mongo real + libs + componentes jsdom)
+- Propósito: App de gestión de presupuestos personales y gastos (ciclo mensual + reportes + control + PWA instalable ya implementados)
+- Usuarios/alcance: **Single-user local** (una sola cuenta; la pareja comparte el mismo login). Deploy: local con Docker (MongoDB) + Next.js.
+- El proyecto usa SDD (constitution → specs → plan → implementación → revisión humana).
 
-# FEATURE A PLANIFICAR (spec aprobada — leela primero)
-La spec está en `specs/pwa-notificaciones.md`. La constitution (sección 4 ya actualizada) es la fuente de autoridad: PWA instalable + notificaciones LOCALES quedan en alcance; push remoto y cron NO.
+# FEATURES A PLANIFICAR (specs aprobadas — leelas primero)
+Las specs están en `specs/gastos-pareja.md` y `specs/recuperacion-password.md`. La constitution es la fuente de autoridad: **single-user NO se toca** (una cuenta compartida sigue siendo una cuenta).
 
-Objetivo: manifest nativo (Next 16) + Service Worker estático + notificaciones locales por umbrales, sin dependencias npm nuevas.
+## Feature A — Gastos de pareja (balance compartido liviano)
+- Campo opcional `paidBy` en transacciones de gasto (`yo` | `pareja` | `compartido`, default null). Tipo nuevo `settlement` en el enum `type` (excluido de TODOS los agregados del presupuesto; solo ajusta el balance).
+- Balance de pareja mensual en `GET /api/reports/summary` (campo nuevo aditivo `coupleBalance`, no romper el contrato).
+- UI: selector "¿Quién pagó?" en el form SOLO para `expense`; bloque "Balance de pareja" en el resumen (Principal); botón "Liquidar" pre-cargado.
+- Decisiones CERRADAS: flexible + informativo (sin split porcentual, sin deudas automáticas), balance SOLO del mes activo (NO tocar MonthlySnapshot), liquidaciones manuales, regresión 0 para transacciones sin `paidBy`.
 
-## Restricciones y decisiones YA tomadas (NO re-abrir)
-- **Sin dependencias npm nuevas** (nada de next-pwa/workbox/web-push). SW a mano en `public/sw.js`.
-- Manifest nativo con `app/manifest.ts` (`MetadataRoute.Manifest`).
-- **Notificaciones LOCALES** vía `registration.showNotification`; **NO** push remoto (web-push/VAPID/PushManager.subscribe).
-- **NO** offline cache de datos/API. El SW precachea solo el shell mínimo (instalabilidad) y maneja `notificationclick`.
-- Deduplicación por sesión con Set en memoria.
-- Disparadores por UMBRALES en el cliente (sin polling, sin cron): límite excedido, gasto diario superado, meta al 100%.
-- UI de permisos en `/perfil` (sección Notificaciones).
-- Verificación final con `next build && next start` (el SW en `next dev` con Turbopack no es referencia confiable).
-- Iconos PNG 192/512 en `public/`; si `which convert` (ImageMagick) no está, usar SVG en el manifest (sizes "any").
+## Feature B — Recuperación de contraseña (token local)
+- `POST /api/auth/forgot`: token JWT one-time (purpose reset, TTL 15 min), hash SHA-256 guardado en User (+2 campos opcionales), token plano en console.log (patrón self-hosted, sin SMTP).
+- `POST /api/auth/reset`: valida token (firma, purpose, exp, hash), actualiza passwordHash con bcryptjs, borra el token (one-time), destruye sesión actual, NO crea sesión.
+- UI en `/login`: "¿Olvidaste tu contraseña?" → pedir token → form token + contraseña nueva.
+- Decisiones CERRADAS: sin email (SMTP queda fuera), sin 2FA/preguntas de seguridad, respuesta genérica de forgot (no revelar estado), no invalidar todas las sesiones activas.
+
+## Restricciones transversales (NO re-abrir)
+- **Regresión 0**: los 153 tests actuales pasan sin modificación. Todo nuevo es aditivo (defaults que preservan comportamiento).
+- **Sin dependencias npm nuevas** (jsonwebtoken/crypto/bcryptjs ya están).
+- API en inglés, UI en español rioplatense.
+- Conventional Commits NO (el humano commitea después de la revisión).
 
 ## Referencias clave que DEBES revisar antes de planificar
-- Guía oficial de Next 16 instalada: `node_modules/next/dist/docs/01-app/02-guides/progressive-web-apps.md` y `offline-support.md` (leela — incluye el patrón de registro de SW y notas de instalabilidad).
-- `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/01-metadata/manifest.md` (formato del objeto Manifest).
-- `src/app/layout.tsx` (dónde registrar el SW / cliente), `src/app/perfil/page.tsx` (dónde va la sección Notificaciones — es página del cliente)
-- `src/app/page.tsx` y `src/app/control/page.tsx` + hooks: `src/hooks/use-reports.ts` (summary con límites/perDay) y `use-budgets.ts` (dónde evaluar umbrales)
-- `src/lib/` (patrón de libs puras; si `src/lib/format.ts` tiene `formatCurrency` reutilizable para textos), `src/types/index.ts` (tipos de BudgetProgress, IMonthlySnapshot)
-- `src/test/factories.ts` (patrón de factories para tests), `src/test/setup.ts` (mocks jsdom-safe — el registro de SW y Notification necesitan mocks)
-- `vitest.config.ts` (include de tests, environment node global con jsdom per-file)
+- Modelos: `src/models/Transaction.ts` (campos, requerimiento condicional de category/goal, índices), `src/models/User.ts` (singletonKey — no tocar), `src/types/index.ts` (ITransaction, TransactionKind, DashboardStats).
+- API: `src/app/api/transactions/route.ts` (POST + schema Zod), `src/app/api/transactions/[id]/route.ts` (PATCH), `src/app/api/reports/summary/route.ts` (agregados: totalIncome/totalExpense/totalFixed/totalVariable/perDayRemaining/savingsRate/donut — definir dónde se excluye `settlement`), `src/app/api/auth/login/route.ts` + `register/route.ts` + `src/lib/auth.ts` (getSessionUserId, createSessionCookie, destroySessionCookie, JWT), `src/lib/password.ts` (hashPassword).
+- UI: `src/components/movements/movement-form.tsx` (form de transacciones), `src/app/page.tsx` (resumen principal, tarjetas), `src/app/login/page.tsx` (vista login).
+- Tests: `src/test/api-routes.test.ts` (patrón: setup + auth real + Mongo real), `src/test/factories.ts` (factories), `src/lib/notification-triggers.ts` (precedente de lib pura testeable con alto coverage — si hace falta una lib de cálculo del balance, seguir ese patrón y sumarla al gate de cobertura en vitest.config.ts).
+- `vitest.config.ts` (include de coverage — agregar libs nuevas de cálculo).
 
 # Tu proceso
-1. **Leer la spec** + la constitution (sección 4) + la guía oficial de PWA de Next 16.
-2. **Explorar el codebase** con las referencias de arriba: cómo está armado el layout (Server vs Client), cómo fetchean los hooks, dónde encaja la evaluación de umbrales sin duplicar lógica.
-3. **Diseñar el plan maestro**: dónde vive cada pieza (manifest, sw.js, registro, lib de notificaciones, UI del perfil, disparadores), cómo evitar re-renders/duplicados, cómo mockear en tests.
-4. **Detallar el plan**: FASES ordenadas (máx 8) con dependencias y secuencia. Incluir fase de iconos (verificar ImageMagick; fallback SVG), fase de SW, fase de notificaciones, fase de tests y fase de verificación manual con `next build && next start`.
+1. **Leer ambas specs** + la constitution + los archivos clave de arriba.
+2. **Explorar** cómo se agregan hoy los totales del summary (para saber todos los lugares donde `settlement` debe excluirse), cómo valida el schema Zod de transactions (para `paidBy` y `settlement`), y cómo está armado el form y el login.
+3. **Diseñar el plan maestro** con las DOS features: dónde vive cada pieza, qué archivos se tocan, cómo evitar romper el contrato del summary y el enum de `type` (rastrear TODOS los usos de `TransactionKind` — filtros, donut, labels).
+4. **Detallar el plan**: FASES ordenadas (máx 10 entre las dos features, respetando dependencias). Sugerencia: Feature B es más aislada (auth + login) — puede ir primero o en paralelo por fases; Feature A toca el modelo compartido (Transaction) y el summary, planificar con cuidado la exclusión de `settlement`.
 
 # Formato de salida (obligatorio)
-## Fase N: <nombre> — [spec: pwa-notificaciones]
+## Fase N: <nombre> — [spec: gastos-pareja | recuperacion-password]
 - Objetivo:
 - Archivos:
 - Detalle técnico:
