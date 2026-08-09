@@ -51,7 +51,13 @@ export async function GET() {
       return NextResponse.json({ error: 'No hay perfil configurado' }, { status: 404 });
     }
 
-    return NextResponse.json(profile.toObject());
+    const user = await User.findOne();
+    const profileData = profile.toObject() as unknown as Record<string, unknown>;
+
+    return NextResponse.json({
+      ...profileData,
+      email: user?.email ?? null,
+    });
   } catch (error: unknown) {
     console.error('Error obteniendo perfil financiero:', error);
     return NextResponse.json(

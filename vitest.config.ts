@@ -5,9 +5,16 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    setupFiles: ['src/test/setup.ts'],
+    testTimeout: 30000,
     coverage: {
       provider: 'v8',
-      include: ['src/lib/password.ts', 'src/lib/session.ts', 'src/proxy.ts'],
+      include: [
+        'src/lib/password.ts',
+        'src/lib/session.ts',
+        'src/proxy.ts',
+        'src/app/api/**/route.ts',
+      ],
       thresholds: {
         lines: 70,
         functions: 70,

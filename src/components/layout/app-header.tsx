@@ -30,12 +30,14 @@ function UserIcon({ className }: { className?: string }) {
 }
 
 function HeaderAvatar() {
+  const pathname = usePathname();
   const [avatar, setAvatar] = useState<AvatarId | null>(null);
+  const [name, setName] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadAvatar(): Promise<void> {
+    async function loadProfile(): Promise<void> {
       try {
         const response = await fetch('/api/profile');
         const result: unknown = await response.json();
@@ -44,25 +46,50 @@ function HeaderAvatar() {
           return;
         }
 
-        const profile = result as { avatar?: AvatarId };
-        if (!cancelled && profile.avatar) {
-          setAvatar(profile.avatar);
+        const profile = result as { avatar?: AvatarId; name?: string };
+        if (!cancelled) {
+          if (profile.avatar) {
+            setAvatar(profile.avatar);
+          }
+          if (profile.name) {
+            setName(profile.name);
+          }
         }
       } catch {
         // El avatar es decorativo; si falla, no mostramos nada.
       }
     }
 
-    void loadAvatar();
+    void loadProfile();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return avatar ? (
-    <AvatarIcon id={avatar} className="h-full w-full" />
-  ) : (
-    <UserIcon className="h-5 w-5 text-ink" />
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <Link
+        href="/perfil"
+        aria-label="Perfil"
+        title={name ?? 'Perfil'}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 transition ${
+          pathname === '/perfil'
+            ? 'border-ink bg-lime shadow-[3px_3px_0_0_#111111]'
+            : 'border-ink bg-white hover:bg-lime'
+        }`}
+      >
+        {avatar ? (
+          <AvatarIcon id={avatar} className="h-full w-full" />
+        ) : (
+          <UserIcon className="h-5 w-5 text-ink" />
+        )}
+      </Link>
+      {name ? (
+        <span className="hidden whitespace-nowrap text-sm font-semibold text-ink/60 md:inline">
+          {name}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -75,18 +102,7 @@ export function AppHeader() {
   return (
     <header className="border-b-4 border-ink bg-white">
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <Link
-          href="/perfil"
-          aria-label="Perfil"
-          title="Perfil"
-          className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 transition ${
-            pathname === '/perfil'
-              ? 'border-ink bg-lime shadow-[3px_3px_0_0_#111111]'
-              : 'border-ink bg-white hover:bg-lime'
-          }`}
-        >
-          <HeaderAvatar />
-        </Link>
+        <HeaderAvatar />
         <Link
           href="/"
           className="flex flex-1 items-center justify-center gap-2 text-xl font-extrabold tracking-tight text-ink"

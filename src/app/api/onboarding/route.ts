@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         savingsCurrency: data.savingsCurrency,
         onboardingCompleted: true,
       },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     const goals = await SavingsGoal.create([

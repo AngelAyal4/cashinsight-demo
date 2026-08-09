@@ -3,19 +3,17 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
-import { AvatarIcon, avatarIds } from '@/components/avatar/avatar-icon';
-import type { AvatarId, CurrencyCode, IFinancialProfile } from '@/types';
+import type { CurrencyCode, IFinancialProfile } from '@/types';
 
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<IFinancialProfile | null>(null);
   const [name, setName] = useState('');
-  const [avatar, setAvatar] = useState<AvatarId>('ren');
+  const [email, setEmail] = useState('');
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>('ARS');
   const [savingsCurrency, setSavingsCurrency] = useState<CurrencyCode>('ARS');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [pickering, setPickerOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,10 +37,10 @@ export default function ProfilePage() {
           throw new Error('No se pudo cargar el perfil');
         }
 
-        const loadedProfile = result as IFinancialProfile;
+        const loadedProfile = result as IFinancialProfile & { email?: string };
         setProfile(loadedProfile);
         setName(loadedProfile.name);
-        setAvatar(loadedProfile.avatar ?? 'ren');
+        setEmail(loadedProfile.email ?? '');
         setBaseCurrency(loadedProfile.baseCurrency);
         setSavingsCurrency(loadedProfile.savingsCurrency);
       } catch (loadError: unknown) {
@@ -65,7 +63,7 @@ export default function ProfilePage() {
       const response = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, avatar, baseCurrency, savingsCurrency }),
+        body: JSON.stringify({ name, baseCurrency, savingsCurrency }),
       });
       const result: unknown = await response.json();
 
@@ -79,7 +77,6 @@ export default function ProfilePage() {
 
       const updated = result as IFinancialProfile;
       setProfile(updated);
-      setAvatar(updated.avatar ?? 'ren');
       setMessage('Perfil actualizado');
     } catch (saveError: unknown) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el perfil');
@@ -136,21 +133,6 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleAvatarChange(id: AvatarId) {
-    setAvatar(id);
-    setPickerOpen(false);
-
-    try {
-      await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatar: id }),
-      });
-    } catch {
-      // El perfil se guarda de nuevo al enviar el formulario.
-    }
-  }
-
   async function handleLogout(): Promise<void> {
     setLoggingOut(true);
 
@@ -196,29 +178,24 @@ export default function ProfilePage() {
           <div className="mt-8 h-72 animate-pulse bg-ink/10" />
         ) : profile ? (
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-            <form onSubmit={handleSubmit} className="card-brutal animate-fade-in h-full space-y-5 p-6">
-              <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-5">
-                <button
-                  type="button"
-                  onClick={() => setPickerOpen(true)}
-                  className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-white transition"
-                  aria-label="Cambiar avatar"
-                >
-                  <AvatarIcon id={avatar} className="h-full w-full transition group-hover:brightness-75" />
-                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs font-bold uppercase tracking-wider text-white opacity-0 transition group-hover:opacity-100">
-                    Editar
-                  </span>
-                </button>
-                <div className="min-w-0">
-                  <label className="block text-sm font-bold text-ink">
-                    Nombre
-                    <input
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      className="form-input"
-                    />
-                  </label>
-                </div>
+            <form onSubmit={handleSubmit} className="card-brutal animate-fade-in h-full space-y-4 p-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="block text-sm font-bold text-ink">
+                  Nombre
+                  <input
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className="form-input"
+                  />
+                </label>
+                <label className="block text-sm font-bold text-ink">
+                  Email
+                  <input
+                    value={email}
+                    readOnly
+                    className="form-input cursor-not-allowed bg-paper/50"
+                  />
+                </label>
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
@@ -311,10 +288,9 @@ export default function ProfilePage() {
                       {passwordError}
                     </p>
                   ) : null}
-                  <button type="button" onClick={handleChangePassword} disabled={passwordSaving} className="btn-brutal btn-brutal-secondary">
+                  <button type="button" onClick={handleChangePassword} disabled={passwordSaving} className="btn-brutal">
                     {passwordSaving ? 'Guardando...' : 'Cambiar contraseña'}
                   </button>
-                  <span className="text-xs font-medium text-ink/60">Enter también guarda.</span>
                 </div>
               </div>
               <div className="border-t-2 border-ink pt-5">
@@ -333,15 +309,15 @@ export default function ProfilePage() {
                     setConfirmingDelete(true);
                   }}
                   disabled={deleting}
-                  className="mt-3 w-full border border-ink/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-ink/50 transition hover:border-rose-600 hover:text-rose-600"
+                  className="mt-3 w-full bg-ink px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-rose-700"
                 >
                   Eliminar cuenta
                 </button>
               </div>
             </form>
-<aside className="card-brutal animate-fade-in flex h-full flex-col p-6" style={{ animationDelay: '100ms' }}>
+<aside className="card-brutal animate-fade-in flex h-full flex-col p-5" style={{ animationDelay: '100ms' }}>
               <h2 className="text-lg font-extrabold uppercase tracking-tight">Recomendaciones</h2>
-              <ul className="mt-4 flex-1 space-y-4 text-sm font-medium text-ink/80">
+              <ul className="mt-3 flex-1 space-y-3 text-sm font-medium text-ink/80">
                 <li className="flex gap-2">
                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
                   Registrá los gastos del día para que el puntaje refleje tu situación real.
@@ -398,48 +374,6 @@ export default function ProfilePage() {
           </section>
         )}
       </main>
-
-      {pickering ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Elegir avatar"
-        >
-          <div
-            className="card-brutal w-full max-w-md p-5 sm:p-6"
-          >
-            <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-3">
-              <div>
-                <h2 className="text-xl font-extrabold uppercase tracking-tight text-ink">Elegí tu avatar</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPickerOpen(false)}
-                aria-label="Cerrar"
-                className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-ink bg-white font-extrabold text-ink transition hover:bg-lime"
-              >
-                X
-              </button>
-            </div>
-            <div className="mt-5 grid grid-cols-3 gap-4">
-              {avatarIds.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => handleAvatarChange(id)}
-                  className={`flex items-center justify-center border-2 p-2 transition ${
-                    avatar === id ? 'bg-lime' : 'bg-white hover:bg-paper'
-                  }`}
-                  aria-label={`Elegir avatar ${id}`}
-                >
-                  <AvatarIcon id={id} className="h-16 w-16" />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {confirmingDelete ? (
         <div
