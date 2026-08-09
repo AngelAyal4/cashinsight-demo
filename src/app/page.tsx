@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { ExpensesDonutChart } from '@/components/dashboard/expenses-donut-chart';
 import { StatCard, StatCardSkeleton } from '@/components/dashboard/stat-cards';
+import { BudgetProgressBar } from '@/components/budgets/budget-card';
 import { MovementForm } from '@/components/movements/movement-form';
 import { MovementsList } from '@/components/movements/movements-list';
 import { Modal } from '@/components/ui/modal';
@@ -143,6 +144,33 @@ export default function Home() {
                 )}
               </div>
             </section>
+
+            {data && data.budgets.length > 0 ? (
+              <section aria-label="Presupuestos activos" className="card-brutal p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-ink/60">
+                    Presupuestos activos
+                  </h2>
+                  <Link href="/presupuestos" className="link-brutal text-xs">
+                    Ver todos
+                  </Link>
+                </div>
+                <ul className="mt-4 space-y-3">
+                  {data.budgets.map((budget) => (
+                    <li key={budget._id}>
+                      <div className="flex items-center justify-between gap-2 text-xs font-bold text-ink">
+                        <span className="truncate">{budget.category.name}</span>
+                        <span className="shrink-0 text-ink/60">
+                          {formatCurrency(budget.usedAmount, currency)} de{' '}
+                          {formatCurrency(budget.amount, currency)}
+                        </span>
+                      </div>
+                      <BudgetProgressBar budget={budget} className="mt-1" />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
             {data ? (
               <>

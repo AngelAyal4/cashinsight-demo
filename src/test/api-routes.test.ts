@@ -8,6 +8,7 @@ import { Category } from '@/models/Category';
 import { SavingsGoal } from '@/models/SavingsGoal';
 import { Transaction } from '@/models/Transaction';
 import { FinancialProfile } from '@/models/FinancialProfile';
+import { Budget } from '@/models/Budget';
 import { POST as registerPOST } from '@/app/api/auth/register/route';
 import { POST as loginPOST } from '@/app/api/auth/login/route';
 import { POST as logoutPOST } from '@/app/api/auth/logout/route';
@@ -24,6 +25,14 @@ import {
 } from '@/app/api/transactions/[id]/route';
 import { GET as goalsGET, POST as goalsPOST } from '@/app/api/goals/route';
 import { DELETE as goalDELETE } from '@/app/api/goals/[id]/route';
+import {
+  GET as budgetsGET,
+  POST as budgetsPOST,
+} from '@/app/api/budgets/route';
+import {
+  DELETE as budgetDELETE,
+  PATCH as budgetPATCH,
+} from '@/app/api/budgets/[id]/route';
 import { POST as onboardingPOST } from '@/app/api/onboarding/route';
 import { GET as profileGET, PATCH as profilePATCH } from '@/app/api/profile/route';
 import { POST as seedPOST } from '@/app/api/seed/route';
@@ -67,6 +76,7 @@ async function cleanDatabase(): Promise<void> {
     Transaction.deleteMany({}),
     SavingsGoal.deleteMany({}),
     Category.deleteMany({}),
+    Budget.deleteMany({}),
   ]);
 }
 
@@ -533,6 +543,281 @@ describe('API de metas (CRUD)', () => {
       routeContext('abc')
     );
     expect(badId.status).toBe(400);
+  });
+});
+
+describe('API de presupuestos (CRUD)', () => {
+  const isoDate = (date: Date): string => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  };
+
+  beforeEach(async () => {
+    await cleanDatabase();
+    cookieJar.clear();
+    await createUserWithSession();
+    await seedPOST();
+  });
+
+  async function categoryIdOf(name: string): Promise<string> {
+    const category = await Category.findOne({ name });
+    if (!category) {
+      throw new Error(`Categoría no encontrada: ${name}`);
+    }
+    return category._id.toString();
+  }
+
+  async function createBudget(
+    amount: number,
+    category: string,
+    startDate = '2026-01-01',
+    endDate = '2026-01-31',
+    period = 'monthly'
+  ): Promise<Response> {
+    return budgetsPOST(
+      jsonRequest(`${API_URL}/api/budgets`, 'POST', {
+        category,
+        amount,
+        period,
+        startDate,
+        endDate,
+      })
+    );
+  }
+
+  it('devuelve 401 sin sesión', async () => {
+    cookieJar.clear();
+    expect((await budgetsGET()).status).toBe(401);
+  });
+
+  it('crea un presupuesto y lo devuelve con progreso inicial', async () => {
+    const category = await categoryIdOf('Alimentación');
+
+    const response = await createBudget(1000, category);
+    expect(response.status).toBe(201);
+
+    const body = await bodyOf(response);
+    expect(body).toEqual(
+      expect.objectContaining({
+        amount: 1000,
+        period: 'monthly',
+        usedAmount: 0,
+        usagePercent: 0,
+        status: 'sano',
+        category: expect.objectContaining({ name: 'Alimentación' }),
+      })
+    );
+  });
+
+  it('lista presupuestos con categoría poblada y progreso en una sola consulta', async () => {
+    const alimentacion = await categoryIdOf('Alimentación');
+    const transporte = await categoryIdOf('Transporte');
+    await createBudget(1000, alimentacion);
+
+    await Transaction.create([
+      {
+        amount: 400,
+        description: 'Supermercado',
+        category: alimentacion,
+        type: 'expense',
+        date: new Date('2026-01-10T12:00:00'),
+      },
+      {
+        amount: 900,
+        description: 'Fuera del rango',
+        category: alimentacion,
+        type: 'expense',
+        date: new Date('2026-02-03T12:00:00'),
+      },
+      {
+        amount: 300,
+        description: 'Otra categoría',
+        category: transporte,
+        type: 'expense',
+        date: new Date('2026-01-05T12:00:00'),
+      },
+    ]);
+
+    const aggregateSpy = vi.spyOn(Budget, 'aggregate');
+    const list = await budgetsGET();
+    expect(list.status).toBe(200);
+    expect(aggregateSpy).toHaveBeenCalledTimes(1);
+    aggregateSpy.mockRestore();
+
+    const budgets = (await list.json()) as {
+      usedAmount: number;
+      usagePercent: number;
+      status: string;
+      category: { name: string };
+    }[];
+    expect(budgets).toHaveLength(1);
+    expect(budgets[0]).toEqual(
+      expect.objectContaining({
+        usedAmount: 400,
+        usagePercent: 40,
+        status: 'sano',
+      })
+    );
+    expect(budgets[0].category.name).toBe('Alimentación');
+  });
+
+  it('rechaza montos no positivos', async () => {
+    const category = await categoryIdOf('Alimentación');
+
+    const negative = await createBudget(-5, category);
+    expect(negative.status).toBe(400);
+
+    const zero = await createBudget(0, category);
+    expect(zero.status).toBe(400);
+  });
+
+  it('rechaza categorías de ingreso y categorías inexistentes', async () => {
+    const income = await categoryIdOf('Sueldo');
+
+    const incomeResponse = await createBudget(1000, income);
+    expect(incomeResponse.status).toBe(400);
+
+    const missing = await createBudget(1000, '507f1f77bcf86cd799439011');
+    expect(missing.status).toBe(404);
+    expect(await bodyOf(missing)).toHaveProperty('error');
+  });
+
+  it('rechaza fechas incoherentes o mal formateadas', async () => {
+    const category = await categoryIdOf('Alimentación');
+
+    const reversed = await createBudget(1000, category, '2026-01-31', '2026-01-01');
+    expect(reversed.status).toBe(400);
+
+    const badFormat = await createBudget(1000, category, '2026/01/01', '2026-01-31');
+    expect(badFormat.status).toBe(400);
+  });
+
+  it('edita un presupuesto y recalcula el progreso de 40% a 80%', async () => {
+    const category = await categoryIdOf('Alimentación');
+    const created = await createBudget(1000, category);
+    const id = String((await bodyOf(created))._id);
+
+    await Transaction.create({
+      amount: 400,
+      description: 'Mercado',
+      category,
+      type: 'expense',
+      date: new Date('2026-01-10T12:00:00'),
+    });
+
+    const missing = await budgetPATCH(
+      jsonRequest(`${API_URL}/api/budgets/507f1f77bcf86cd799439011`, 'PATCH', {
+        amount: 500,
+      }),
+      routeContext('507f1f77bcf86cd799439011')
+    );
+    expect(missing.status).toBe(404);
+
+    const badId = await budgetPATCH(
+      jsonRequest(`${API_URL}/api/budgets/abc`, 'PATCH', { amount: 500 }),
+      routeContext('abc')
+    );
+    expect(badId.status).toBe(400);
+
+    const updated = await budgetPATCH(
+      jsonRequest(`${API_URL}/api/budgets/${id}`, 'PATCH', { amount: 500 }),
+      routeContext(id)
+    );
+    expect(updated.status).toBe(200);
+    const updatedBody = await bodyOf(updated);
+    expect(updatedBody.amount).toBe(500);
+    expect(updatedBody.usedAmount).toBe(400);
+    expect(updatedBody.usagePercent).toBe(80);
+    expect(updatedBody.status).toBe('advertencia');
+
+    const badDates = await budgetPATCH(
+      jsonRequest(`${API_URL}/api/budgets/${id}`, 'PATCH', {
+        startDate: '2026-02-01',
+      }),
+      routeContext(id)
+    );
+    expect(badDates.status).toBe(400);
+  });
+
+  it('elimina un presupuesto y responde { message }', async () => {
+    const category = await categoryIdOf('Alimentación');
+    const created = await createBudget(1000, category);
+    const id = String((await bodyOf(created))._id);
+
+    const deleted = await budgetDELETE(
+      jsonRequest(`${API_URL}/api/budgets/${id}`, 'DELETE'),
+      routeContext(id)
+    );
+    expect(deleted.status).toBe(200);
+    expect((await bodyOf(deleted)).message).toBe('Presupuesto eliminado');
+
+    const again = await budgetDELETE(
+      jsonRequest(`${API_URL}/api/budgets/${id}`, 'DELETE'),
+      routeContext(id)
+    );
+    expect(again.status).toBe(404);
+
+    const badId = await budgetDELETE(
+      jsonRequest(`${API_URL}/api/budgets/abc`, 'DELETE'),
+      routeContext('abc')
+    );
+    expect(badId.status).toBe(400);
+  });
+
+  it('permite dos presupuestos de la misma categoría y período con distintas fechas', async () => {
+    const category = await categoryIdOf('Alimentación');
+
+    const january = await createBudget(1000, category, '2026-01-01', '2026-01-31');
+    expect(january.status).toBe(201);
+
+    const february = await createBudget(1000, category, '2026-02-01', '2026-02-28');
+    expect(february.status).toBe(201);
+
+    const collision = await createBudget(1000, category, '2026-01-01', '2026-01-31');
+    expect(collision.status).toBe(409);
+  });
+
+  it('excluye presupuestos huérfanos (categoría eliminada)', async () => {
+    const category = await categoryIdOf('Alimentación');
+    await createBudget(1000, category);
+    await Category.findByIdAndDelete(category);
+
+    const list = await budgetsGET();
+    expect(list.status).toBe(200);
+    expect((await list.json()) as unknown[]).toHaveLength(0);
+  });
+
+  it('incluye solo presupuestos vigentes en el resumen del dashboard', async () => {
+    const category = await Category.create({
+      name: 'Mascotas',
+      type: 'expense',
+    });
+    const categoryId = category._id.toString();
+    const now = new Date();
+    const monthStart = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+    const monthEnd = isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    const previousMonthEnd = isoDate(new Date(now.getFullYear(), now.getMonth(), 0));
+    const previousMonthStart = isoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+    await Transaction.create({
+      amount: 500,
+      description: 'Compra del mes',
+      category: categoryId,
+      type: 'expense',
+      date: new Date(now.getFullYear(), now.getMonth(), 10, 12),
+    });
+
+    await createBudget(1000, categoryId, monthStart, monthEnd);
+    await createBudget(500, categoryId, previousMonthStart, previousMonthEnd);
+
+    const response = await summaryGET();
+    expect(response.status).toBe(200);
+    const summary = (await response.json()) as { budgets: { amount: number; usedAmount: number }[] };
+    expect(summary.budgets).toHaveLength(1);
+    expect(summary.budgets[0]).toEqual(
+      expect.objectContaining({ amount: 1000, usedAmount: 500 })
+    );
   });
 });
 

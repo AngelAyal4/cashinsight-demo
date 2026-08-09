@@ -3,7 +3,7 @@ import { AUTH_COOKIE_NAME, verifySessionToken } from '@/lib/session';
 
 const PUBLIC_API_PREFIX = '/api/auth';
 
-const PROTECTED_PAGES = ['/', '/metas', '/perfil', '/onboarding'];
+const PROTECTED_PAGES = ['/', '/metas', '/presupuestos', '/perfil', '/onboarding'];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

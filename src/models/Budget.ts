@@ -13,7 +13,7 @@ const budgetSchema = new Schema<IBudgetDocument>(
     amount: {
       type: Number,
       required: true,
-      min: 0,
+      min: 0.01,
     },
     period: {
       type: String,
@@ -36,8 +36,17 @@ const budgetSchema = new Schema<IBudgetDocument>(
   }
 );
 
-// One budget per category per period
-budgetSchema.index({ category: 1, period: 1 }, { unique: true });
+budgetSchema.pre('validate', function () {
+  if (this.endDate < this.startDate) {
+    this.invalidate(
+      'endDate',
+      'La fecha de fin debe ser posterior o igual a la fecha de inicio'
+    );
+  }
+});
+
+// One budget per category per period per start date
+budgetSchema.index({ category: 1, period: 1, startDate: 1 }, { unique: true });
 
 export const Budget: Model<IBudgetDocument> =
   mongoose.models.Budget ||

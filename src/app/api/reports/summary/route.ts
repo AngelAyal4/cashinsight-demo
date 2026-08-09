@@ -5,6 +5,7 @@ import '@/models/Category';
 import { FinancialProfile } from '@/models/FinancialProfile';
 import { Transaction } from '@/models/Transaction';
 import { getGoalsWithProgress } from '@/lib/goal-progress';
+import { getBudgetsWithProgress } from '@/lib/budget-progress';
 
 interface TransactionTotal {
   _id: 'income' | 'expense' | 'saving' | 'withdrawal';
@@ -51,6 +52,7 @@ export async function GET() {
       recentTransactions,
       profile,
       goals,
+      budgets,
     ] = await Promise.all([
       Transaction.aggregate<SingleTotal>([
         {
@@ -125,6 +127,7 @@ export async function GET() {
         .limit(5),
       FinancialProfile.findOne(),
       getGoalsWithProgress(),
+      getBudgetsWithProgress(true),
     ]);
 
     const monthlyIncome = incomeResult[0]?.total || 0;
@@ -195,6 +198,7 @@ export async function GET() {
           : null,
       profile,
       goals,
+      budgets,
       incomeDistribution,
       recentTransactions,
     });

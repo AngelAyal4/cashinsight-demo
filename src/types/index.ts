@@ -19,6 +19,8 @@ export type GoalType =
   | 'retirement'
   | 'travel'
   | 'custom';
+export type BudgetPeriod = 'weekly' | 'monthly' | 'yearly';
+export type BudgetStatus = 'sano' | 'advertencia' | 'excedido';
 
 export interface ICategory {
   _id?: string;
@@ -49,11 +51,18 @@ export interface IBudget {
   _id?: string;
   category: string | ICategory;
   amount: number;
-  period: 'weekly' | 'monthly' | 'yearly';
+  period: BudgetPeriod;
   startDate: Date;
   endDate: Date;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface BudgetProgress extends Omit<IBudget, 'category'> {
+  category: ICategory;
+  usedAmount: number;
+  usagePercent: number;
+  status: BudgetStatus;
 }
 
 export interface IUser {
@@ -88,6 +97,7 @@ export interface DashboardStats {
   scoreMessage: string | null;
   profile: IFinancialProfile | null;
   goals: GoalProgress[];
+  budgets: BudgetProgress[];
   recentTransactions: ITransaction[];
   incomeDistribution: ExpenseByCategory[];
 }

@@ -9,6 +9,7 @@ import type { AvatarId } from '@/types';
 const navigation = [
   { href: '/', label: 'Principal' },
   { href: '/metas', label: 'Metas' },
+  { href: '/presupuestos', label: 'Presupuestos' },
 ];
 
 function UserIcon({ className }: { className?: string }) {

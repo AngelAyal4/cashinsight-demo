@@ -18,6 +18,20 @@ if (!global.mongoose) {
   global.mongoose = cached;
 }
 
+let budgetIndexesSynced = false;
+
+async function syncBudgetIndexes(): Promise<void> {
+  if (budgetIndexesSynced) {
+    return;
+  }
+
+  const { Budget } = await import('@/models/Budget');
+  // La colección no tiene datos: sincroniza los índices del schema una única vez,
+  // eliminando el índice viejo { category, period } y dejando { category, period, startDate }.
+  await Budget.syncIndexes();
+  budgetIndexesSynced = true;
+}
+
 export async function connectDB(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
@@ -31,6 +45,7 @@ export async function connectDB(): Promise<typeof mongoose> {
 
   try {
     cached.conn = await cached.promise;
+    await syncBudgetIndexes();
     console.log('✅ MongoDB conectado');
   } catch (error) {
     cached.promise = null;
