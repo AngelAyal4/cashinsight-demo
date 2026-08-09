@@ -1,57 +1,49 @@
-# Prompt 2 — EJECUTOR (Roadmap: Ciclo Mensual + Reportes + Control + Principal + Ayuda)
+# Prompt 2 — EJECUTOR (Feature: Tests de componentes / frontend)
 
 > Pegá este prompt en OpenCode (agente `build`) con tu modelo eficiente.
 > El ejecutor implementa archivo por archivo siguiendo el plan del orquestador.
 > Incluí ANTES el plan completo generado por el orquestador en la sección final.
 
 # Rol
-Sos el EJECUTOR de código del ROADMAP de CashinsightApp (ciclo mensual + reportes + control + principal + ayuda). Implementás el plan del orquestador, archivo por archivo, siguiendo las reglas del proyecto y las specs aprobadas.
+Sos el EJECUTOR de código de CashinsightApp. Implementás el plan del orquestador para la feature **tests de componentes (frontend)**, archivo por archivo, siguiendo las reglas del proyecto y la spec aprobada `specs/tests-frontend.md`.
 
 # Reglas del proyecto (CashinsightApp)
 - Next.js 16 App Router + TypeScript strict (sin `any`)
 - TailwindCSS + Tremor para UI
-- Mongoose models con validación y timestamps
-- API routes con manejo de errores consistente: `{ error: string }` + HTTP status (400/401/404/500)
-- Validación de input con Zod en TODAS las rutas
-- Auth en todas las rutas: `getSessionUserId()` → `unauthorizedResponse()` si no hay sesión
-- Patrón de rutas: replica EXACTAMENTE el estilo de `src/app/api/goals/route.ts`
-- Mobile-first responsive, rutas de página en español (con excepciones aprobadas: /report, /help)
+- Tests con Vitest 4: los existentes (`src/**/*.test.ts`) corren en `environment: 'node'` y NO deben romperse
 - JAMÁS hardcodear secretos — usar `process.env`
-- Tests con vitest siguiendo el patrón de `src/test/api-routes.test.ts`
+- Commits: NO hacer commits (el humano revisa antes)
 
-# Las specs aprobadas (fuente de verdad, en orden)
-Leé Y respetá: `specs/ciclo-mensual.md`, `specs/reportes.md`, `specs/control.md`, `specs/principal.md`, `specs/ayuda.md`. La `constitution.md` (secciones 1.6, 2.2, 2.5, 3) es la autoridad máxima.
+# La spec aprobada (fuente de verdad)
+Leé Y respetá: `specs/tests-frontend.md`. La `constitution.md` es la autoridad máxima.
 
 # Decisiones YA tomadas (NO re-abrir)
-- Cierre mensual NUNCA borra: compacta a snapshot + `archived: true` en transacciones.
-- Lazy rollover (primer request del mes nuevo), idempotente.
-- Límites de Control PERSISTEN entre meses.
-- Detalle del mes anterior NO se muestra (solo snapshot).
-- Categorías de gasto con campo `behavior: 'fijo' | 'variable'`.
+- Tests de componentes en `src/**/*.test.tsx` con `// @vitest-environment jsdom` per-file. El environment global de Vitest Sigue en `node` (no tocar tests de API ni su config de environment).
+- Instalar devDeps con `npm install -D --legacy-peer-deps` (`.npmrc` ya fija `legacy-peer-deps=true`): `@testing-library/react` (v16+ por React 19), `@testing-library/jest-dom`, `@testing-library/user-event`, `jsdom`.
+- Mocks jsdom-safe en el setup compartido (`src/test/setup.ts` o archivo referenciado por `setupFiles`): `ResizeObserver`, `window.matchMedia`, `HTMLElement.prototype.getBBox` si hace falta. Deben ser inofensivos cuando los tests corren en node.
+- El `include` de coverage se modifica SOLO para agregar `src/lib/format.ts`. Los componentes NO entran al gate de cobertura (sus tests son adicionales, no porcentuales).
+- Los tests de componentes NO requieren MongoDB.
+- Si un test existente se rompe por la config, ajustar SOLO el mínimo necesario y documentarlo en el plan/prompt final.
 
 # ⛔ Restricciones
 - NO rediseñar la arquitectura (seguir el plan del orquestador)
 - NO modificar `.env`, `AGENTS.md` ni `constitution.md`
-- NO agregar dependencias nuevas sin justificar en cada caso
-- NO hacer commits (el humano revisa antes)
-- NO implementar out-of-scope de las specs (comparativas, export, cron externo, etc.)
-- AL REPONSAR testes existentes que se rompen (`archived` en transacciones), ajustarlos SOLO si el cambio es de semántica (agregar el filtro), no modificar casos que siguen siendo válidos.
+- NO agregar dependencias fuera de las listadas en la spec (si algo más falta, justificarlo)
+- NO hacer commits
+- NO implementar out-of-scope: E2E (Playwright/Cypress), visual regression, tests de páginas completas, cobertura forzada de componentes
 
 # Orden de implementación (del plan del orquestador)
-Las fases vienen del plan. Verificar al final de cada fase: `npx tsc --noEmit` y los tests de esa fase.
+Las fases vienen del plan. **Fase crítica**: validar la infraestructura con UN test mínimo (jsdom + Tremor con mocks) ANTES de escribir el resto de los tests. Verificar al final de cada fase `npx tsc --noEmit` y los tests de esa fase.
 
-# Criterio de entrega (global del roadmap)
-- [ ] Rollover: snapshot del mes anterior generado + transactions archivadas + idempotente
-- [ ] `/report`: lista de meses + detalle con las 6 secciones (estado vacío sin error)
-- [ ] `/control`: migración de /presupuestos (redirect 301) + solo categorías variables
-- [ ] `/`: presupuesto general con indicadores (availableToSpend, perDay, savingsRate) + estado guía si no hay ingresos
-- [ ] `/help`: mapa, ciclo mensual, guías, FAQ (details/summary accesible)
-- [ ] `npx vitest run` pasa (tests previos ajustados + nuevos)
-- [ ] `npm run build` y `npm run lint` pasan
+# Criterio de entrega (global de la feature)
+- [ ] `npm run test` pasa: 84 tests previos + nuevos de componentes (suma > 84)
+- [ ] Los tests de componentes cubren al menos los RF4–RF13 de la spec
+- [ ] `npm run test:coverage` pasa (thresholds 70% intactos, `format.ts` incluido)
+- [ ] `npm run lint` y `npm run build` pasan
 - [ ] Sin secretos hardcodeados
+- [ ] Sin modificaciones a tests existentes salvo ajustes mínimos documentados
 
 ---
-
 # PLAN DEL ORQUESTADOR (pegar aquí)
 
 [Copiá acá el plan generado por el orquestador, fases con archivos y detalle técnico]
