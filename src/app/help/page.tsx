@@ -92,6 +92,11 @@ const faq = [
     answer:
     'Se guarda igual, pero como ese mes ya está cerrado la transacción queda archivada: no aparece en tus listados activos, pero sigue existiendo en los datos históricos del mes.',
   },
+  {
+    question: '¿Olvidaste tu contraseña?',
+    answer:
+      'Entrá a /login y tocá "¿Olvidaste tu contraseña?". Dale a "Pedir token": la app imprime un token en la consola del server (la terminal donde corre "npm run dev"), con el prefijo [RECUPERACIÓN]. Copiá ese token, pegalo en el formulario junto con tu contraseña nueva (mínimo 8 caracteres) y tocá "Restablecer". El token dura 15 minutos y sirve una sola vez; después iniciás sesión con la contraseña nueva.',
+  },
 ];
 
 function FaqItem({ question, answer }: { question: string; answer: string }) {

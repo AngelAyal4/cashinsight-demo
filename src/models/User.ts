@@ -4,6 +4,8 @@ export interface IUserDocument extends Document {
   email: string;
   passwordHash: string;
   singletonKey: string;
+  passwordResetTokenHash?: string;
+  passwordResetExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +29,14 @@ const userSchema = new Schema<IUserDocument>(
       type: String,
       unique: true,
       default: 'singleton',
+    },
+    passwordResetTokenHash: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpiresAt: {
+      type: Date,
+      select: false,
     },
   },
   { timestamps: true }

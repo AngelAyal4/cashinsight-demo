@@ -4,13 +4,26 @@ import { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { CategoryIcon } from '@/components/icons/category-icon';
 import { formatCurrency, formatDate } from '@/lib/format';
-import type { CurrencyCode, ICategory, ITransaction, TransactionKind } from '@/types';
+import type {
+  CurrencyCode,
+  ICategory,
+  ITransaction,
+  PaidBy,
+  TransactionKind,
+} from '@/types';
 
 const movementLabels: Record<TransactionKind, string> = {
   expense: 'Gasto',
   income: 'Ingreso',
   saving: 'Ahorro o meta',
   withdrawal: 'Retiro',
+  settlement: 'Liquidación',
+};
+
+const paidByLabels: Record<PaidBy, string> = {
+  yo: 'vos',
+  pareja: 'tu pareja',
+  compartido: 'compartido',
 };
 
 type SortOption = 'amount-desc' | 'amount-asc' | 'date' | 'category';
@@ -163,6 +176,7 @@ export function MovementsList({ currency, refreshKey, onEdit }: MovementsListPro
             const isIncome = transaction.type === 'income';
             const isSaving = transaction.type === 'saving';
             const isWithdrawal = transaction.type === 'withdrawal';
+            const isSettlement = transaction.type === 'settlement';
             const isGoalMovement = isSaving || isWithdrawal;
 
             const amountColor = isIncome
@@ -171,16 +185,30 @@ export function MovementsList({ currency, refreshKey, onEdit }: MovementsListPro
                 ? 'text-violet'
                 : isWithdrawal
                   ? 'text-amber-600'
-                  : 'text-ink';
+                  : isSettlement
+                    ? 'text-ink/70'
+                    : 'text-ink';
 
-            const amountSign = isIncome ? '+' : isSaving ? '→' : isWithdrawal ? '←' : '−';
+            const amountSign = isIncome
+              ? '+'
+              : isSaving
+                ? '→'
+                : isWithdrawal
+                  ? '←'
+                  : isSettlement
+                    ? '⇄'
+                    : '−';
 
             return (
               <li key={transaction._id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 sm:flex-nowrap">
                 <span
                   className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-ink text-ink"
                   style={{
-                    backgroundColor: isGoalMovement ? '#ddd6fe' : category?.color ?? '#e7e5e4',
+                    backgroundColor: isGoalMovement
+                      ? '#ddd6fe'
+                      : isSettlement
+                        ? '#e7e5e4'
+                        : category?.color ?? '#e7e5e4',
                   }}
                 >
                   <CategoryIcon
@@ -193,7 +221,13 @@ export function MovementsList({ currency, refreshKey, onEdit }: MovementsListPro
                   <p className="text-xs font-medium text-ink/60">
                     {isGoalMovement
                       ? `Meta: ${goal?.name ?? 'Sin meta'}`
-                      : movementLabels[transaction.type]}{' '}
+                      : isSettlement
+                        ? `Liquidación · recibió ${
+                            transaction.paidBy === 'yo' ? 'vos' : 'tu pareja'
+                          }`
+                        : transaction.paidBy
+                          ? `${movementLabels[transaction.type]} · pagó ${paidByLabels[transaction.paidBy]}`
+                          : movementLabels[transaction.type]}{' '}
                     · {formatDate(transaction.date)}
                   </p>
                 </div>

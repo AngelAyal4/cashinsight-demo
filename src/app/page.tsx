@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { ExpensesDonutChart } from '@/components/dashboard/expenses-donut-chart';
 import { StatCard, StatCardSkeleton } from '@/components/dashboard/stat-cards';
+import { CoupleBalanceCard } from '@/components/dashboard/couple-balance-card';
 import { BudgetProgressBar } from '@/components/budgets/budget-card';
 import { MovementForm } from '@/components/movements/movement-form';
 import { MovementsList } from '@/components/movements/movements-list';
@@ -12,12 +13,20 @@ import { Modal } from '@/components/ui/modal';
 import { useDashboard } from '@/hooks/use-dashboard';
 import { useThresholdNotifications } from '@/hooks/use-threshold-notifications';
 import { formatCurrency } from '@/lib/format';
-import type { ITransaction, TransactionKind } from '@/types';
+import { hasCoupleActivity } from '@/lib/couple-balance';
+import type { ITransaction, PaidBy, TransactionKind } from '@/types';
+
+interface SettlementPreset {
+  amount: number;
+  paidBy: PaidBy;
+}
 
 export default function Home() {
   const { data, loading, error, retry } = useDashboard();
   const [editing, setEditing] = useState<ITransaction | null>(null);
   const [initialType, setInitialType] = useState<TransactionKind | null>(null);
+  const [settlementPreset, setSettlementPreset] =
+    useState<SettlementPreset | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [movementsRefreshKey, setMovementsRefreshKey] = useState(0);
 
@@ -32,6 +41,23 @@ export default function Home() {
   function openModal(transaction: ITransaction | null, type?: TransactionKind) {
     setEditing(transaction);
     setInitialType(type ?? null);
+    setSettlementPreset(null);
+    setModalOpen(true);
+  }
+
+  function openSettlementModal() {
+    const balance = data?.coupleBalance;
+
+    if (!balance) {
+      return;
+    }
+
+    setEditing(null);
+    setInitialType('settlement');
+    setSettlementPreset({
+      amount: Math.abs(balance.net),
+      paidBy: balance.status === 'te-deben' ? 'yo' : 'pareja',
+    });
     setModalOpen(true);
   }
 
@@ -39,12 +65,14 @@ export default function Home() {
     setModalOpen(false);
     setEditing(null);
     setInitialType(null);
+    setSettlementPreset(null);
   }
 
   function handleSaved() {
     setModalOpen(false);
     setEditing(null);
     setInitialType(null);
+    setSettlementPreset(null);
     setMovementsRefreshKey((key) => key + 1);
     retry();
   }
@@ -236,6 +264,14 @@ export default function Home() {
               </section>
             ) : null}
 
+            {data?.coupleBalance && hasCoupleActivity(data.coupleBalance) ? (
+              <CoupleBalanceCard
+                balance={data.coupleBalance}
+                currency={currency}
+                onSettle={openSettlementModal}
+              />
+            ) : null}
+
             {data && data.budgets.length > 0 ? (
               <section aria-label="Presupuestos activos" className="card-brutal p-5">
                 <div className="flex items-center justify-between gap-3">
@@ -291,7 +327,13 @@ export default function Home() {
 
       <Modal
         open={modalOpen}
-        title={editing ? 'Editar movimiento' : 'Nuevo movimiento'}
+        title={
+          editing
+            ? 'Editar movimiento'
+            : settlementPreset
+              ? 'Liquidar balance de pareja'
+              : 'Nuevo movimiento'
+        }
         subtitle={`Moneda: ${currency}`}
         onClose={closeModal}
       >
@@ -300,6 +342,9 @@ export default function Home() {
           goals={data?.goals ?? []}
           editing={editing}
           initialType={initialType ?? undefined}
+          initialAmount={settlementPreset?.amount}
+          initialPaidBy={settlementPreset?.paidBy}
+          initialDescription={settlementPreset ? 'Liquidación de pareja' : undefined}
           onSaved={handleSaved}
           onCancel={closeModal}
         />

@@ -14,11 +14,13 @@ export default defineConfig({
       include: [
         'src/lib/password.ts',
         'src/lib/session.ts',
+        'src/lib/password-reset.ts',
         'src/proxy.ts',
         'src/lib/monthly-date.ts',
         'src/lib/monthly-cycle.ts',
         'src/lib/financial-metrics.ts',
         'src/lib/budget-progress.ts',
+        'src/lib/couple-balance.ts',
         'src/lib/format.ts',
         'src/lib/notification-triggers.ts',
         'src/app/api/**/route.ts',

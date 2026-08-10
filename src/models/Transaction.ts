@@ -20,7 +20,11 @@ const transactionSchema = new Schema<ITransactionDocument>(
       type: Schema.Types.ObjectId,
       ref: 'Category',
       required: function (this: ITransactionDocument): boolean {
-        return this.type !== 'saving' && this.type !== 'withdrawal';
+        return (
+          this.type !== 'saving' &&
+          this.type !== 'withdrawal' &&
+          this.type !== 'settlement'
+        );
       },
     },
     goal: {
@@ -32,8 +36,14 @@ const transactionSchema = new Schema<ITransactionDocument>(
     },
     type: {
       type: String,
-      enum: ['income', 'expense', 'saving', 'withdrawal'],
+      enum: ['income', 'expense', 'saving', 'withdrawal', 'settlement'],
       required: true,
+    },
+    /** Responsable del gasto compartido. Null = fuera del balance de pareja. */
+    paidBy: {
+      type: String,
+      enum: ['yo', 'pareja', 'compartido', null],
+      default: null,
     },
     date: {
       type: Date,

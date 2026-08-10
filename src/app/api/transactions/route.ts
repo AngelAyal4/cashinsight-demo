@@ -20,27 +20,44 @@ const baseTransactionSchema = z.object({
   isRecurring: z.boolean().default(false),
 });
 
+/** Solo los gastos participan del balance de pareja. */
+const paidBySchema = z.enum(['yo', 'pareja', 'compartido']).nullable().optional();
+/** El resto de los tipos rechaza un paidBy explícito (400). */
+const noPaidBySchema = z.null({ message: 'Solo los gastos admiten "¿Quién pagó?"' }).optional();
+
 const transactionSchema = z.discriminatedUnion('type', [
   baseTransactionSchema.extend({
     type: z.literal('income'),
     category: objectIdSchema,
+    paidBy: noPaidBySchema,
   }),
   baseTransactionSchema.extend({
     type: z.literal('expense'),
     category: objectIdSchema,
+    paidBy: paidBySchema,
   }),
   baseTransactionSchema.extend({
     type: z.literal('saving'),
     goal: objectIdSchema,
+    paidBy: noPaidBySchema,
   }),
   baseTransactionSchema.extend({
     type: z.literal('withdrawal'),
     goal: objectIdSchema,
+    paidBy: noPaidBySchema,
+  }),
+  baseTransactionSchema.extend({
+    type: z.literal('settlement'),
+    paidBy: z.enum(['yo', 'pareja'], {
+      message: 'Indicá quién recibió la liquidación',
+    }),
   }),
 ]);
 
 const querySchema = z.object({
-  type: z.enum(['income', 'expense', 'saving', 'withdrawal']).optional(),
+  type: z
+    .enum(['income', 'expense', 'saving', 'withdrawal', 'settlement'])
+    .optional(),
   month: z
     .string()
     .regex(/^\d{4}-\d{2}$/, 'El mes debe tener formato AAAA-MM')
@@ -147,7 +164,7 @@ export async function POST(request: Request) {
           { status: 404 }
         );
       }
-    } else {
+    } else if (data.type !== 'settlement') {
       const category = await Category.findById(data.category);
 
       if (!category) {

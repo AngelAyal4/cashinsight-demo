@@ -13,9 +13,12 @@ const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i);
 const updateTransactionSchema = z.object({
   amount: z.number().positive().optional(),
   description: z.string().trim().min(1).max(200).optional(),
-  type: z.enum(['income', 'expense', 'saving', 'withdrawal']).optional(),
+  type: z
+    .enum(['income', 'expense', 'saving', 'withdrawal', 'settlement'])
+    .optional(),
   category: objectIdSchema.optional(),
   goal: objectIdSchema.optional(),
+  paidBy: z.enum(['yo', 'pareja', 'compartido']).nullable().optional(),
   date: z.coerce.date().optional(),
   notes: z.string().trim().max(500).optional(),
   isRecurring: z.boolean().optional(),
@@ -105,6 +108,26 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const data = parsed.data;
     const nextType = data.type ?? transaction.type;
+    const nextPaidBy =
+      data.paidBy !== undefined ? data.paidBy : transaction.paidBy ?? null;
+
+    if (nextType === 'settlement') {
+      if (nextPaidBy !== 'yo' && nextPaidBy !== 'pareja') {
+        return NextResponse.json(
+          { error: 'Indicá quién recibió la liquidación' },
+          { status: 400 }
+        );
+      }
+
+      transaction.category = undefined;
+      transaction.goal = undefined;
+      transaction.paidBy = nextPaidBy;
+    } else if (nextType !== 'expense' && data.paidBy) {
+      return NextResponse.json(
+        { error: 'Solo los gastos admiten "¿Quién pagó?"' },
+        { status: 400 }
+      );
+    }
 
     if (nextType === 'saving' || nextType === 'withdrawal') {
       const goalId = data.goal ?? String(transaction.goal ?? '');
@@ -116,7 +139,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       transaction.goal = goalId;
       transaction.category = undefined;
-    } else {
+    } else if (nextType !== 'settlement') {
       const categoryId = data.category ?? String(transaction.category ?? '');
       const category = await Category.findById(categoryId);
 
@@ -136,6 +159,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     transaction.type = nextType;
+    if (nextType === 'expense') {
+      transaction.paidBy = nextPaidBy;
+    } else if (nextType !== 'settlement') {
+      // Al salir de "gasto", el movimiento deja de participar del balance.
+      transaction.paidBy = null;
+    }
     if (data.amount !== undefined) transaction.amount = data.amount;
     if (data.description !== undefined) transaction.description = data.description;
     if (data.date !== undefined) {

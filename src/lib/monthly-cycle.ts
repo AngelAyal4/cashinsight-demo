@@ -71,7 +71,8 @@ async function buildSnapshot(monthKey: string): Promise<IMonthlySnapshot> {
   const [facetRows, goalContributions, goalsProgress, budgetCompliance] =
     await Promise.all([
       Transaction.aggregate<FacetResult>([
-        { $match: { date: { $gte: start, $lt: end } } },
+        // Las liquidaciones de pareja no entran en el snapshot del mes.
+        { $match: { date: { $gte: start, $lt: end }, type: { $ne: 'settlement' } } },
         {
           $facet: {
             byType: [

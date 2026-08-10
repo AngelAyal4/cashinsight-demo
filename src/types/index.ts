@@ -2,7 +2,13 @@
 
 export type CurrencyCode = 'ARS' | 'USD' | 'EUR';
 export type TransactionType = 'income' | 'expense';
-export type TransactionKind = TransactionType | 'saving' | 'withdrawal';
+export type TransactionKind =
+  | TransactionType
+  | 'saving'
+  | 'withdrawal'
+  | 'settlement';
+export type PaidBy = 'yo' | 'pareja' | 'compartido';
+export type CoupleBalanceStatus = 'te-deben' | 'debes' | 'saldado';
 export type IncomeAccuracy = 'approximate' | 'exact';
 export type AvatarId =
   | 'bruno'
@@ -43,6 +49,7 @@ export interface ITransaction {
   category?: string | ICategory;
   type: TransactionKind;
   goal?: string | ISavingsGoal;
+  paidBy?: PaidBy | null;
   date: Date;
   notes?: string;
   isRecurring?: boolean;
@@ -88,6 +95,13 @@ export interface MonthlyReport {
   }[];
 }
 
+export interface CoupleBalance {
+  paidByMe: number;
+  paidByPartner: number;
+  net: number;
+  status: CoupleBalanceStatus;
+}
+
 export interface DashboardStats {
   totalBalance: number;
   monthlyIncome: number;
@@ -112,6 +126,7 @@ export interface DashboardStats {
   availableToSpend: number;
   perDayRemaining: number;
   savingsRate: number;
+  coupleBalance?: CoupleBalance;
 }
 
 export interface ExpenseByCategory {

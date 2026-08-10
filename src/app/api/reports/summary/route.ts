@@ -7,6 +7,10 @@ import { Transaction } from '@/models/Transaction';
 import { getGoalsWithProgress } from '@/lib/goal-progress';
 import { getBudgetsWithProgress } from '@/lib/budget-progress';
 import {
+  computeCoupleBalance,
+  type CoupleBalanceRow,
+} from '@/lib/couple-balance';
+import {
   computeAvailableToSpend,
   computeFinancialScore,
   computePerDayRemaining,
@@ -34,10 +38,15 @@ interface CategoryRow {
   total: number;
 }
 
+interface CoupleRow {
+  _id: { type: 'expense' | 'settlement'; paidBy: 'yo' | 'pareja' | 'compartido' };
+  total: number;
+}
+
 interface FacetResult {
   byType: TypeTotal[];
   byCategory: CategoryRow[];
-  balType: TypeTotal[];
+  couple: CoupleRow[];
 }
 
 interface ActiveTotals {
@@ -88,11 +97,26 @@ export async function GET() {
               },
               { $sort: { total: -1 } },
             ],
+            couple: [
+              {
+                $match: {
+                  paidBy: { $ne: null },
+                  type: { $in: ['expense', 'settlement'] },
+                },
+              },
+              {
+                $group: {
+                  _id: { type: '$type', paidBy: '$paidBy' },
+                  total: { $sum: '$amount' },
+                },
+              },
+            ],
           },
         },
       ]),
       Transaction.aggregate<ActiveTotals>([
-        { $match: { archived: { $ne: true } } },
+        // Las liquidaciones de pareja no son ingreso ni gasto: fuera del balance.
+        { $match: { archived: { $ne: true }, type: { $ne: 'settlement' } } },
         {
           $facet: {
             byType: [
@@ -113,7 +137,7 @@ export async function GET() {
       getBudgetsWithProgress(true),
     ]);
 
-    const facetRow = facetDocs[0] ?? { byType: [], byCategory: [] };
+    const facetRow = facetDocs[0] ?? { byType: [], byCategory: [], couple: [] };
     const activeTotalsRow = activeTotalDocs[0] ?? { byType: [] };
     const recentTransactions = recentDocs;
 
@@ -173,6 +197,15 @@ export async function GET() {
       daysRemaining
     );
 
+    const coupleRows: CoupleBalanceRow[] = (facetRow.couple ?? []).map(
+      (row) => ({
+        type: row._id.type,
+        paidBy: row._id.paidBy,
+        total: row.total,
+      })
+    );
+    const coupleBalance = computeCoupleBalance(coupleRows);
+
     const monthlyBalance = monthlyIncome - monthlyExpense - monthlySavings;
     const incomeDistribution: ExpenseByCategory[] = [
       ...expensesByCategory,
@@ -208,6 +241,7 @@ export async function GET() {
       availableToSpend,
       perDayRemaining,
       savingsRate: computeSavingsRate(monthlySavings, monthlyIncome),
+      coupleBalance,
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);

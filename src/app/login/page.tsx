@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AuthForm } from '@/components/auth/auth-form';
+import { PasswordRecovery } from '@/components/auth/password-recovery';
 
 export default function LoginPage() {
   return (
@@ -28,6 +29,7 @@ export default function LoginPage() {
               Registrate
             </Link>
           </p>
+          <PasswordRecovery />
         </div>
       </div>
     </main>
