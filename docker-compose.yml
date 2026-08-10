@@ -1,14 +1,39 @@
-version: "3.8"
 services:
   mongo:
     image: mongo:7
     container_name: cashinsight-mongo
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: cashinsightapp
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ ping: 1 })"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: cashinsight-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cashinsight-tunnel
+    command: tunnel --no-autoupdate --url http://app:3000
+    depends_on:
+      - app
     restart: unless-stopped
 
 volumes:

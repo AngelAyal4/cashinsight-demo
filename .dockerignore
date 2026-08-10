@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env*
+coverage
+backups
+evidencia
+prompts
+specs
+docs
+memory
+*.log
+tsconfig.tsbuildinfo

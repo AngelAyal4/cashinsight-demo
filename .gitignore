@@ -40,6 +40,10 @@ yarn-error.log*
 *.swp
 *.swo
 
+# Backup y evidencia (locales)
+backups/
+evidencia/
+
 # Misc
 *.log
 .cache/
