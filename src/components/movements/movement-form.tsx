@@ -198,28 +198,6 @@ export function MovementForm({
             placeholder="Ej. Supermercado"
           />
         </label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-bold text-ink">
-            Monto
-            <MoneyInput
-              required
-              min={0.01}
-              value={amount}
-              onChange={setAmount}
-              className="form-input"
-            />
-          </label>
-          <label className="block text-sm font-bold text-ink">
-            Fecha
-            <input
-              required
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              className="form-input"
-            />
-          </label>
-        </div>
         {isSettlement ? null : type === 'saving' || type === 'withdrawal' ? (
           <label className="block text-sm font-bold text-ink">
             {type === 'withdrawal' ? '¿De cuál meta retirás?' : '¿A cuál meta va este ahorro?'}
@@ -255,15 +233,37 @@ export function MovementForm({
             </select>
           </label>
         )}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-bold text-ink">
+            Monto
+            <MoneyInput
+              required
+              min={0.01}
+              value={amount}
+              onChange={setAmount}
+              className="form-input"
+            />
+          </label>
+          <label className="block text-sm font-bold text-ink">
+            Fecha
+            <input
+              required
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              className="form-input"
+            />
+          </label>
+        </div>
         {type === 'expense' ? (
           <fieldset>
             <legend className="text-sm font-bold text-ink">¿Quién pagó?</legend>
-            <div className="mt-1 grid grid-cols-4 border-2 border-ink bg-white">
+            <div className="mt-1 grid grid-cols-2 border-2 border-ink bg-white sm:grid-cols-4">
               <button
                 type="button"
                 onClick={() => setPaidBy(null)}
                 aria-pressed={paidBy === null}
-                className={`border-r-2 border-ink px-2 py-2 text-xs font-bold transition ${
+                  className={`border-r-2 border-b-2 border-ink px-2 py-2 text-xs font-bold transition sm:border-b-0 ${
                   paidBy === null
                     ? 'bg-lime text-ink'
                     : 'bg-white text-ink/60 hover:bg-paper'
@@ -278,6 +278,8 @@ export function MovementForm({
                   onClick={() => setPaidBy(option.value)}
                   aria-pressed={paidBy === option.value}
                   className={`border-r-2 border-ink px-2 py-2 text-xs font-bold transition last:border-r-0 ${
+                    option.value === 'yo' ? 'border-b-2 sm:border-b-0' : ''
+                  } ${
                     paidBy === option.value
                       ? 'bg-lime text-ink'
                       : 'bg-white text-ink/60 hover:bg-paper'

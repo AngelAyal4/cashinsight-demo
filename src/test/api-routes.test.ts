@@ -256,12 +256,12 @@ describe('API de categorías', () => {
 
     const first = await seedPOST();
     expect(first.status).toBe(201);
-    expect(await Category.countDocuments()).toBe(13);
+    expect(await Category.countDocuments()).toBe(17);
     expect(await Transaction.countDocuments()).toBe(10);
 
     const second = await seedPOST();
     expect(second.status).toBe(200);
-    expect(await Category.countDocuments()).toBe(13);
+    expect(await Category.countDocuments()).toBe(17);
     expect(await Transaction.countDocuments()).toBe(10);
   });
 
@@ -273,7 +273,7 @@ describe('API de categorías', () => {
     expect(response.status).toBe(200);
 
     const list = (await response.json()) as { name: string }[];
-    expect(list).toHaveLength(13);
+    expect(list).toHaveLength(17);
     expect(list[list.length - 1].name).toBe('Otro');
     expect(list[list.length - 2].name).toBe('Otro');
   });

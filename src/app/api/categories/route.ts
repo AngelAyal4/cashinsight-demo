@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getSessionUserId, unauthorizedResponse } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import { Category } from '@/models/Category';
+import { DEFAULT_CATEGORIES } from '@/lib/default-categories';
 
 const categorySchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -23,6 +24,15 @@ export async function GET() {
 
   try {
     await connectDB({ runMonthlyRollover: true });
+    await Category.bulkWrite(
+      DEFAULT_CATEGORIES.map((category) => ({
+        updateOne: {
+          filter: { name: category.name, type: category.type },
+          update: { $setOnInsert: { ...category } },
+          upsert: true,
+        },
+      }))
+    );
     const categories = await Category.find().sort({ name: 1 });
     const sortedCategories = categories
       .slice()

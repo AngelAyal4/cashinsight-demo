@@ -28,20 +28,20 @@ function makeBudget(overrides: Partial<BudgetProgress> = {}): BudgetProgress {
 }
 
 describe('BudgetProgressBar', () => {
-  it('renderiza sin crash con datos válidos', () => {
-    const budget = makeBudget();
+  it('muestra el remanente del límite (100 - gastado)', () => {
+    const budget = makeBudget({ usagePercent: 50, usedAmount: 25000 });
     const { container } = render(<BudgetProgressBar budget={budget} />);
-    const bar = container.querySelector('.tremor-ProgressBar-progressBar');
+    const bar = container.querySelector('.bg-emerald-500');
     expect(bar).not.toBeNull();
     expect(bar).toHaveStyle({ width: '50%' });
   });
 
-  it('trunca el valor a 100 cuando usagePercent > 100', () => {
+  it('queda en 0% cuando usagePercent > 100', () => {
     const budget = makeBudget({ usagePercent: 137, usedAmount: 68500 });
     const { container } = render(<BudgetProgressBar budget={budget} />);
-    const bar = container.querySelector('.tremor-ProgressBar-progressBar');
+    const bar = container.querySelector('.bg-rose-600');
     expect(bar).not.toBeNull();
-    expect(bar).toHaveStyle({ width: '100%' });
+    expect(bar).toHaveStyle({ width: '0%' });
   });
 
   it('aplica color emerald para estado sano', () => {
@@ -50,16 +50,18 @@ describe('BudgetProgressBar', () => {
     expect(container.querySelector('.bg-emerald-500')).not.toBeNull();
   });
 
-  it('aplica color amber para estado advertencia', () => {
+  it('aplica color rose desde 80% de uso (advertencia)', () => {
     const budget = makeBudget({ status: 'advertencia', usagePercent: 85 });
     const { container } = render(<BudgetProgressBar budget={budget} />);
-    expect(container.querySelector('.bg-amber-500')).not.toBeNull();
+    const bar = container.querySelector('.bg-rose-600');
+    expect(bar).not.toBeNull();
+    expect(bar).toHaveStyle({ width: '15%' });
   });
 
   it('aplica color rose para estado excedido', () => {
     const budget = makeBudget({ status: 'excedido', usagePercent: 110 });
     const { container } = render(<BudgetProgressBar budget={budget} />);
-    expect(container.querySelector('.bg-rose-500')).not.toBeNull();
+    expect(container.querySelector('.bg-rose-600')).not.toBeNull();
   });
 });
 

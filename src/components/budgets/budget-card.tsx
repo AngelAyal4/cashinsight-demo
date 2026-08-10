@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { ProgressBar } from '@tremor/react';
 import { CategoryIcon } from '@/components/icons/category-icon';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { BudgetProgress, CurrencyCode } from '@/types';
@@ -12,15 +11,18 @@ interface BudgetProgressBarProps {
 }
 
 export function BudgetProgressBar({ budget, className }: BudgetProgressBarProps) {
-  const displayValue = Math.min(100, budget.usagePercent);
-  const color =
-    budget.status === 'sano'
-      ? 'emerald'
-      : budget.status === 'advertencia'
-        ? 'amber'
-        : 'rose';
+  const spent = Math.min(100, budget.usagePercent);
+  const remaining = 100 - spent;
+  const barColor = spent >= 80 ? 'bg-rose-600' : 'bg-emerald-500';
 
-  return <ProgressBar value={displayValue} color={color} className={className} />;
+  return (
+    <div className={`h-2 w-full overflow-hidden rounded-full border-2 border-ink bg-paper ${className ?? ''}`}>
+      <div
+        className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+        style={{ width: `${remaining}%` }}
+      />
+    </div>
+  );
 }
 
 interface BudgetCardProps {

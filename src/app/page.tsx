@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
+import { CategoryIcon } from '@/components/icons/category-icon';
 import { ExpensesDonutChart } from '@/components/dashboard/expenses-donut-chart';
 import { StatCard, StatCardSkeleton } from '@/components/dashboard/stat-cards';
 import { CoupleBalanceCard } from '@/components/dashboard/couple-balance-card';
@@ -14,11 +15,34 @@ import { useDashboard } from '@/hooks/use-dashboard';
 import { useThresholdNotifications } from '@/hooks/use-threshold-notifications';
 import { formatCurrency } from '@/lib/format';
 import { hasCoupleActivity } from '@/lib/couple-balance';
+import { computeFinancialHealth, type FinancialHealth } from '@/lib/financial-metrics';
 import type { ITransaction, PaidBy, TransactionKind } from '@/types';
 
 interface SettlementPreset {
   amount: number;
   paidBy: PaidBy;
+}
+
+function FinancialHealthCard({ health }: { health: FinancialHealth }) {
+  return (
+    <section aria-label="Salud financiera" className="card-brutal p-4">
+      <p className="text-[0.7rem] font-bold uppercase tracking-wider text-ink/60">
+        Salud financiera
+      </p>
+      <div className="mt-2 flex items-start gap-2">
+        <span
+          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink ${health.dotClass}`}
+          aria-hidden="true"
+        >
+          <CategoryIcon name="heart" className="h-4 w-4" />
+        </span>
+        <p className="text-lg font-extrabold leading-tight text-ink">
+          {health.label} <span aria-hidden="true">-</span>{' '}
+          <span className="font-semibold">{health.description}</span>
+        </p>
+      </div>
+    </section>
+  );
 }
 
 export default function Home() {
@@ -78,6 +102,16 @@ export default function Home() {
   }
 
   const hasIncome = (data?.monthlyIncome ?? 0) > 0;
+  const financialHealth = data
+    ? computeFinancialHealth({
+        monthlyIncome: data.monthlyIncome,
+        monthlyExpense: data.monthlyExpense,
+        monthlySavings: data.monthlySavings,
+        plannedSavings: data.profile ? data.plannedSavings : null,
+        fixedExpenses: data.profile ? data.profile.fixedExpenses : null,
+        variableExpenses: data.profile ? data.profile.variableExpenses : null,
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -201,16 +235,12 @@ export default function Home() {
                           label="Disponible para gastar"
                           value={formatCurrency(data.availableToSpend, currency)}
                         />
-                        <StatCard
-                          label="Per día restante"
-                          value={formatCurrency(data.perDayRemaining, currency)}
-                          className={data.daysRemaining > 1 ? 'bg-emerald-50' : ''}
-                        />
+                        {financialHealth ? <FinancialHealthCard health={financialHealth} /> : null}
                       </>
                     ) : (
                       <>
                         <StatCard label="Gastos del mes" value={formatCurrency(data.monthlyExpense, currency)} />
-                        <StatCard label="Salud financiera" value="Pendiente" />
+                         {financialHealth ? <FinancialHealthCard health={financialHealth} /> : null}
                       </>
                     )}
                   </>
@@ -273,10 +303,10 @@ export default function Home() {
             ) : null}
 
             {data && data.budgets.length > 0 ? (
-              <section aria-label="Presupuestos activos" className="card-brutal p-5">
+                <section aria-label="Controla tus límites" className="card-brutal p-5">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-sm font-bold uppercase tracking-wider text-ink/60">
-                    Presupuestos activos
+                    Controla tus límites
                   </h2>
                   <Link href="/control" className="link-brutal text-xs">
                     Ver todos
@@ -286,11 +316,10 @@ export default function Home() {
                   {data.budgets.map((budget) => (
                     <li key={budget._id}>
                       <div className="flex items-center justify-between gap-2 text-xs font-bold text-ink">
-                        <span className="truncate">{budget.category.name}</span>
+                        <span className="truncate">{budget.category.name} {budget.usagePercent.toFixed(0)}%</span>
                         <span className="shrink-0 text-ink/60">
                           {formatCurrency(budget.usedAmount, currency)} de{' '}
-                          {formatCurrency(budget.amount, currency)} ·{' '}
-                          {budget.usagePercent.toFixed(0)}%
+                          {formatCurrency(budget.amount, currency)}
                         </span>
                       </div>
                       <BudgetProgressBar budget={budget} className="mt-1" />

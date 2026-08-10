@@ -111,14 +111,16 @@ export function AppHeader() {
 
   return (
     <header className="border-b-4 border-ink bg-white">
-      <div className="relative mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <HeaderAvatar />
-        <div className="absolute left-1/2 -translate-x-1/2">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex shrink-0 items-center gap-2">
+          <HeaderAvatar />
+        </div>
+        <div className="flex min-w-0 flex-1 justify-center">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-ink"
+            className="flex min-w-0 items-center gap-2 text-xl font-extrabold tracking-tight text-ink"
           >
-            <span className="flex h-9 w-9 items-center justify-center border-2 border-ink bg-lime text-lg">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-ink bg-lime text-lg">
               $
             </span>
             <span className="truncate">CashinsightApp</span>
@@ -126,9 +128,9 @@ export function AppHeader() {
         </div>
         <nav
           aria-label="Navegación principal"
-          className="hidden shrink-0 items-center gap-2 sm:ml-auto sm:flex"
+          className="hidden shrink-0 items-center gap-2 lg:flex"
         >
-          <ul className="flex flex-wrap items-center gap-2 text-sm">
+          <ul className="flex flex-nowrap items-center gap-2 whitespace-nowrap text-sm">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
 
@@ -154,7 +156,7 @@ export function AppHeader() {
           aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
-          className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center border-2 border-ink bg-white transition hover:bg-lime sm:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-ink bg-white transition hover:bg-lime lg:hidden"
         >
           <span className="flex flex-col gap-1">
             <span
@@ -178,7 +180,7 @@ export function AppHeader() {
       {menuOpen && (
         <nav
           aria-label="Navegación móvil"
-          className="border-t-2 border-ink bg-white px-4 py-2 sm:hidden"
+          className="border-t-2 border-ink bg-white px-4 py-2 lg:hidden"
         >
           <ul className="flex flex-col gap-1 text-sm">
             {navigation.map((item) => {

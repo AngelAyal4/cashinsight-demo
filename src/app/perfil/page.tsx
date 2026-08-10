@@ -180,7 +180,7 @@ export default function ProfilePage() {
         {loading ? (
           <div className="mt-8 h-72 animate-pulse bg-ink/10" />
         ) : profile ? (
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
             <form onSubmit={handleSubmit} className="card-brutal animate-fade-in h-full space-y-4 p-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <label className="block text-sm font-bold text-ink">
@@ -318,54 +318,38 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
-<div className="flex flex-col gap-6">
-              <aside className="card-brutal animate-fade-in flex flex-col p-5" style={{ animationDelay: '100ms' }}>
-              <h2 className="text-lg font-extrabold uppercase tracking-tight">Recomendaciones</h2>
-              <ul className="mt-3 flex-1 space-y-3 text-sm font-medium text-ink/80">
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Registrá los gastos del día para que el puntaje refleje tu situación real.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Usá “Ahorro o meta” cuando separes dinero para no contabilizarlo como un gasto común.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Priorizá tus ahorros como un gasto fijo más para ser constante con tus metas.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Revisá tus metas al cierre de cada mes y ajustá prioridades si cambió tu ingreso.
-                </li>
-                 <li className="flex gap-2">
-                   <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                   Apuntá a un fondo de emergencia de 3 a 6 meses de tus gastos fijos.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Revisá cada mes tus suscripciones y bajá las que ya no usás.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Pagá primero las deudas con mayor interés y evitá nuevos consumos con tarjeta.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Anotá también los montos chicos: un café por día se acumula en el mes.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                  Compará cada cierre de mes lo presupuestado contra lo gastado para ajustar prioridades.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
-                   Mantené actualizados tus ingresos y gastos fijos para que el puntaje sea fiel a tu realidad.
-                 </li>
-               </ul>
-               <Link href="/help" className="btn-brutal btn-brutal-secondary mt-4 block text-center">
-                 Obtener más ayuda
-               </Link>
+<div className="flex h-full flex-col gap-6">
+              <aside className="card-brutal animate-fade-in p-5" style={{ animationDelay: '100ms' }}>
+                <h2 className="text-lg font-extrabold uppercase tracking-tight">Recomendaciones</h2>
+                <ul className="mt-3 space-y-3 text-sm font-medium text-ink/80">
+                  <li className="flex gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                    Registrá los gastos del día para que el puntaje refleje tu situación real.
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                    Priorizá tus ahorros como un gasto fijo más para ser constante con tus metas.
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                    Apuntá a un fondo de emergencia de 3 a 6 meses de tus gastos fijos.
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                    Compará cada cierre de mes lo presupuestado contra lo gastado para ajustar prioridades.
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                    Revisá cada mes tus suscripciones y bajá las que ya no usás.
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
+                    Anotá también los montos chicos: un café por día se acumula en el mes.
+                  </li>
+                </ul>
+                <Link href="/help" className="btn-brutal btn-brutal-secondary mt-4 block text-center">
+                  Obtener más ayuda
+                </Link>
               </aside>
               <NotificationsSection />
             </div>
