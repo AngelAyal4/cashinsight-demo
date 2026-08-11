@@ -250,16 +250,16 @@ export function BudgetFormModal({ budget, onClose, onSaved }: BudgetFormModalPro
               {error}
             </p>
           ) : null}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
+            <button type="button" onClick={onClose} className="btn-brutal btn-brutal-secondary">
+              Cancelar
+            </button>
             <button type="submit" disabled={loading || categories.length === 0} className="btn-brutal">
               {loading
                 ? 'Guardando...'
                 : budget
                   ? 'Guardar cambios'
                   : 'Crear presupuesto'}
-            </button>
-            <button type="button" onClick={onClose} className="btn-brutal btn-brutal-secondary">
-              Cancelar
             </button>
           </div>
         </form>

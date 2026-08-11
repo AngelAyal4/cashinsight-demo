@@ -122,15 +122,7 @@ export function PasswordRecovery() {
             <code className="font-bold">npm run dev</code>). Es válido 15
             minutos y de un solo uso.
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={handleRequestToken}
-              className="btn-brutal btn-brutal-xs"
-            >
-              {submitting ? 'Generando...' : 'Pedir token'}
-            </button>
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
             <button
               type="button"
               onClick={() => {
@@ -140,6 +132,14 @@ export function PasswordRecovery() {
               className="btn-brutal btn-brutal-xs btn-brutal-secondary"
             >
               Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={handleRequestToken}
+              className="btn-brutal btn-brutal-xs"
+            >
+              {submitting ? 'Generando...' : 'Pedir token'}
             </button>
           </div>
         </>
@@ -183,14 +183,7 @@ export function PasswordRecovery() {
                 className="form-input"
               />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="btn-brutal btn-brutal-xs"
-              >
-                {submitting ? 'Restableciendo...' : 'Restablecer'}
-              </button>
+            <div className="flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -200,6 +193,13 @@ export function PasswordRecovery() {
                 className="btn-brutal btn-brutal-xs btn-brutal-secondary"
               >
                 Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="btn-brutal btn-brutal-xs"
+              >
+                {submitting ? 'Restableciendo...' : 'Restablecer'}
               </button>
             </div>
           </form>

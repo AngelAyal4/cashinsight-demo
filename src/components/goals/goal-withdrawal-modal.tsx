@@ -112,12 +112,12 @@ export function GoalWithdrawalModal({
             {error}
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-3">
-          <button type="submit" disabled={loading} className="btn-brutal btn-brutal-amber">
-            {loading ? 'Procesando...' : 'Confirmar retiro'}
-          </button>
+        <div className="flex flex-wrap justify-end gap-3">
           <button type="button" onClick={onClose} className="btn-brutal btn-brutal-secondary">
             Cancelar
+          </button>
+          <button type="submit" disabled={loading} className="btn-brutal btn-brutal-amber">
+            {loading ? 'Procesando...' : 'Confirmar retiro'}
           </button>
         </div>
       </form>

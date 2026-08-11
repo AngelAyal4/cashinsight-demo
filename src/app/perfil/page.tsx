@@ -230,9 +230,11 @@ export default function ProfilePage() {
                   {error}
                 </p>
               ) : null}
-              <button type="submit" disabled={saving} className="btn-brutal">
-                {saving ? 'Guardando...' : 'Guardar cambios'}
-              </button>
+              <div className="flex justify-end">
+                <button type="submit" disabled={saving} className="btn-brutal">
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
 
               <div className="border-t-2 border-ink pt-5">
                 <h3 className="text-sm font-extrabold uppercase tracking-tight">Contraseña</h3>
@@ -291,9 +293,11 @@ export default function ProfilePage() {
                       {passwordError}
                     </p>
                   ) : null}
-                  <button type="button" onClick={handleChangePassword} disabled={passwordSaving} className="btn-brutal">
-                    {passwordSaving ? 'Guardando...' : 'Cambiar contraseña'}
-                  </button>
+                  <div className="flex justify-end">
+                    <button type="button" onClick={handleChangePassword} disabled={passwordSaving} className="btn-brutal">
+                      {passwordSaving ? 'Guardando...' : 'Cambiar contraseña'}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="border-t-2 border-ink pt-5">

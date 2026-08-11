@@ -137,7 +137,7 @@ export default function Home() {
             ) : null}
           </div>
           {data ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               {!hasIncome ? (
                 <button
                   type="button"

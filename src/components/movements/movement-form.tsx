@@ -330,7 +330,14 @@ export function MovementForm({
             {error}
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="btn-brutal btn-brutal-secondary"
+          >
+            Cancelar
+          </button>
           <button
             type="submit"
             disabled={loading}
@@ -338,15 +345,6 @@ export function MovementForm({
           >
             {loading ? 'Guardando...' : editing ? 'Guardar cambios' : 'Registrar movimiento'}
           </button>
-          {editing ? (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="btn-brutal btn-brutal-secondary"
-            >
-              Cancelar
-            </button>
-          ) : null}
         </div>
       </form>
     </>

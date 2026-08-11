@@ -265,12 +265,12 @@ export function MovementsList({ currency, refreshKey, onEdit }: MovementsListPro
         <p className="text-sm font-medium text-ink/80">
           ¿Seguro que querés eliminar este movimiento? Esta acción no se puede deshacer.
         </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" onClick={executeDelete} className="btn-brutal btn-brutal-danger">
-            Sí, eliminar
-          </button>
+        <div className="mt-5 flex flex-wrap justify-end gap-3">
           <button type="button" onClick={() => setDeletingTransaction(null)} className="btn-brutal btn-brutal-secondary">
             Cancelar
+          </button>
+          <button type="button" onClick={executeDelete} className="btn-brutal btn-brutal-danger">
+            Sí, eliminar
           </button>
         </div>
       </Modal>

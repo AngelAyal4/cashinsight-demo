@@ -76,7 +76,10 @@ export function GoalDeleteModal({ goal, onClose, onDeleted }: GoalDeleteModalPro
           {error}
         </p>
       ) : null}
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 flex flex-wrap justify-end gap-3">
+        <button type="button" onClick={onClose} className="btn-brutal btn-brutal-secondary">
+          Cancelar
+        </button>
         <button
           type="button"
           onClick={handleDelete}
@@ -84,9 +87,6 @@ export function GoalDeleteModal({ goal, onClose, onDeleted }: GoalDeleteModalPro
           className="btn-brutal btn-brutal-danger"
         >
           {loading ? 'Eliminando...' : isComplete ? 'Eliminar meta' : 'Sí, eliminar'}
-        </button>
-        <button type="button" onClick={onClose} className="btn-brutal btn-brutal-secondary">
-          Cancelar
         </button>
       </div>
     </Modal>

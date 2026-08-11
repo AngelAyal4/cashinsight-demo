@@ -112,6 +112,13 @@ export function BudgetCard({ budget, currency, onEdit, onDelete }: BudgetCardPro
             </span>
             <button
               type="button"
+              onClick={() => setConfirming(false)}
+              className="btn-brutal btn-brutal-sm btn-brutal-secondary"
+            >
+              No
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setConfirming(false);
                 onDelete(budget);
@@ -119,13 +126,6 @@ export function BudgetCard({ budget, currency, onEdit, onDelete }: BudgetCardPro
               className="btn-brutal btn-brutal-sm btn-brutal-danger"
             >
               Sí
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              className="btn-brutal btn-brutal-sm btn-brutal-secondary"
-            >
-              No
             </button>
           </div>
         ) : (

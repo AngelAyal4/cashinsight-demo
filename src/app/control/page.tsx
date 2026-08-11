@@ -85,9 +85,11 @@ export default function ControlPage() {
               compras del día. Los gastos fijos se gestionan desde Principal.
             </p>
           </div>
-          <button type="button" onClick={() => setFormOpen(true)} className="btn-brutal">
-            Nuevo límite
-          </button>
+          <div className="flex justify-end">
+            <button type="button" onClick={() => setFormOpen(true)} className="btn-brutal">
+              Nuevo límite
+            </button>
+          </div>
         </div>
 
         {error ? (
@@ -172,20 +174,20 @@ export default function ControlPage() {
                 ¿Querés eliminar el límite de{' '}
                 <strong>{deleting.category.name}</strong>? El gasto ya registrado se mantiene.
               </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => void handleDelete()}
-                  className="btn-brutal btn-brutal-danger"
-                >
-                  Sí, eliminar
-                </button>
+              <div className="mt-5 flex flex-wrap justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setDeleting(null)}
                   className="btn-brutal btn-brutal-secondary"
                 >
                   Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDelete()}
+                  className="btn-brutal btn-brutal-danger"
+                >
+                  Sí, eliminar
                 </button>
               </div>
             </div>

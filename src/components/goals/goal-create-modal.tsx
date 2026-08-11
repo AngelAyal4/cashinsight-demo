@@ -153,12 +153,12 @@ export function GoalCreateModal({ onClose, onCreated }: GoalCreateModalProps) {
             {error}
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-3">
-          <button type="submit" disabled={loading} className="btn-brutal">
-            {loading ? 'Creando...' : 'Crear meta'}
-          </button>
+        <div className="flex flex-wrap justify-end gap-3">
           <button type="button" onClick={onClose} className="btn-brutal btn-brutal-secondary">
             Cancelar
+          </button>
+          <button type="submit" disabled={loading} className="btn-brutal">
+            {loading ? 'Creando...' : 'Crear meta'}
           </button>
         </div>
       </form>
