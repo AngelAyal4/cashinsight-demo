@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed:local": "node --experimental-strip-types --import ./scripts/ts-path-loader.mjs scripts/seed-local.ts",
+    "verify:bundle": "node scripts/verify-bundle.mjs",
+    "verify:surface": "node scripts/verify-surface.mjs",
+    "verify:console": "node scripts/verify-console.mjs"
   },
   "dependencies": {
     "@tremor/react": "^3.18.7",

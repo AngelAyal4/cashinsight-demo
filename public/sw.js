@@ -42,14 +42,15 @@ function revalidate(request) {
 
 function cacheFirst(request) {
   return caches.match(request).then((cached) => {
-    if (cached) {
+    // No se sirven respuestas redirigidas ni con URL distinta a la pedida:
+    // el precache de rutas autenticadas que redirigen (307 -> /login) cachea
+    // la respuesta final, y devolverla para una navegación rompe la carga.
+    if (cached && !cached.redirected && cached.url === request.url) {
       revalidate(request);
       return cached;
     }
 
-    return revalidate(request).then(
-      (response) => response || caches.match('/')
-    );
+    return revalidate(request).then((response) => response || undefined);
   });
 }
 

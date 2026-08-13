@@ -1,0 +1,18 @@
+[
+  {
+    "type": "route",
+    "path": "/login",
+    "budgetGzip": 180000,
+    "measuredGzip": 178569,
+    "reason": "El JS inicial de /login (178.6 KB gzip) supera el budget de 150 KB por el baseline del framework presente en TODAS las rutas auth: runtime react-dom (71.6 KB), runtime de Turbopack (44.7 KB) y polyfills injectados por el target de browsers (39.6 KB) suman ~156 KB. La página aporta solo ~22 KB de código propio y NO carga Recharts/Tremor. La excepción de 180 KB sigue vigente tras el hardening; el chunk split global cambió con los dynamic imports (metas/report) pero el baseline de auth permanece por encima de 150 KB.",
+    "plan": "Mantener la excepción de 180 KB vigente. Post-deploy: auditar browser targets y dependencias que disparan polyfills de core-js para reducir el baseline de framework (~156 KB)."
+  },
+  {
+    "type": "route",
+    "path": "/register",
+    "budgetGzip": 180000,
+    "measuredGzip": 177664,
+    "reason": "Histórico: idéntico al caso de /login (baseline de framework ~156 KB superaba 150 KB, excepción de 180 KB). Tras el cambio de chunk split global, /register mide 177664 B gzip, aún por encima de 150 KB; la excepción sigue vigente y documentada.",
+    "plan": "Mantener la excepción de 180 KB vigente. Post-deploy: auditar browser targets y dependencias que disparan polyfills de core-js para reducir el baseline de framework (~156 KB)."
+  }
+]

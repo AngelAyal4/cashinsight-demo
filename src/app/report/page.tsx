@@ -1,13 +1,21 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { ReportsEmptyState } from '@/components/reports/reports-empty-state';
 import { ReportsList } from '@/components/reports/reports-list';
-import { ReportsDetail } from '@/components/reports/reports-detail';
 import { useReports } from '@/hooks/use-reports';
 import { isValidMonthKey } from '@/lib/monthly-date';
+
+const ReportsDetail = dynamic(
+  () => import('@/components/reports/reports-detail').then((mod) => mod.ReportsDetail),
+  {
+    ssr: false,
+    loading: () => <div className="mt-8 h-80 animate-pulse bg-ink/10" />,
+  }
+);
 
 function ReportsContent() {
   const searchParams = useSearchParams();

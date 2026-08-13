@@ -36,7 +36,7 @@ import {
 } from '@/app/api/budgets/[id]/route';
 import { POST as onboardingPOST } from '@/app/api/onboarding/route';
 import { GET as profileGET, PATCH as profilePATCH } from '@/app/api/profile/route';
-import { POST as seedPOST } from '@/app/api/seed/route';
+import { seedDemoData } from '@/lib/seed';
 import { GET as summaryGET } from '@/app/api/reports/summary/route';
 import { GET as reportsGET } from '@/app/api/reports/route';
 import { GET as reportDetailGET } from '@/app/api/reports/[monthKey]/route';
@@ -254,20 +254,22 @@ describe('API de categorías', () => {
   it('crea los datos de ejemplo una única vez', async () => {
     await createUserWithSession();
 
-    const first = await seedPOST();
-    expect(first.status).toBe(201);
+    const first = await seedDemoData();
+    expect(first.created).toBe(true);
+    expect(first.message).toBe('Datos de ejemplo creados');
     expect(await Category.countDocuments()).toBe(18);
     expect(await Transaction.countDocuments()).toBe(10);
 
-    const second = await seedPOST();
-    expect(second.status).toBe(200);
+    const second = await seedDemoData();
+    expect(second.created).toBe(false);
+    expect(second.message).toBe('Ya existe data');
     expect(await Category.countDocuments()).toBe(18);
     expect(await Transaction.countDocuments()).toBe(10);
   });
 
   it('lista categorías ordenadas con "Otro" al final', async () => {
     await createUserWithSession();
-    await seedPOST();
+    await seedDemoData();
 
     const response = await categoriesGET();
     expect(response.status).toBe(200);
@@ -301,7 +303,7 @@ describe('API de transacciones (CRUD)', () => {
     await cleanDatabase();
     cookieJar.clear();
     await createUserWithSession();
-    await seedPOST();
+    await seedDemoData();
   });
 
   async function categoryId(name: string, type: 'income' | 'expense'): Promise<string> {
@@ -663,7 +665,7 @@ describe('API de presupuestos (CRUD)', () => {
     await cleanDatabase();
     cookieJar.clear();
     await createUserWithSession();
-    await seedPOST();
+    await seedDemoData();
     // El seed crea transacciones en el mes actual: se eliminan para que los
     // casos usen sus propios movimientos con montos deterministas.
     await Transaction.deleteMany({});
@@ -1125,7 +1127,7 @@ describe('API de reportes (resumen del dashboard)', () => {
 
   it('calcula el resumen mensual con los datos de ejemplo', async () => {
     await createUserWithSession();
-    await seedPOST();
+    await seedDemoData();
 
     const response = await summaryGET();
     expect(response.status).toBe(200);
@@ -1155,7 +1157,7 @@ describe('API de reportes (resumen del dashboard)', () => {
 
   it('el ahorro externo no reduce el balance del mes ni la tasa de ahorro', async () => {
     await createUserWithSession();
-    await seedPOST();
+    await seedDemoData();
     const goal = await SavingsGoal.create({
       name: 'Viaje',
       goalType: 'travel',
@@ -1190,7 +1192,7 @@ describe('API de reportes (resumen del dashboard)', () => {
 
   it('el ahorro desde ingresos reduce el balance del mes', async () => {
     await createUserWithSession();
-    await seedPOST();
+    await seedDemoData();
     const goal = await SavingsGoal.create({
       name: 'Viaje',
       goalType: 'travel',

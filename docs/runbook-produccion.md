@@ -183,6 +183,51 @@ O a Atlas directamente (⚠️ destructivo): `gunzip -c backups/<archivo>.gz | d
 
 Login/register/forgot/reset tienen ventana fija de 15 min por IP (colección `ratelimits` con TTL). Excedido → `429 "Demasiados intentos. Probá de nuevo más tarde."` Los límites del plan M0 cubren la escritura por intento (single-user).
 
+### 10.7 Verificación post-deploy
+
+Tras el deploy en Vercel, validar la superficie pública con los verificadores del hardening (sin credenciales):
+
+```bash
+BASE_URL=https://<proyecto>.vercel.app npm run verify:surface
+node scripts/verify-pwa.mjs https://<proyecto>.vercel.app
+```
+
+## 11. Datos de ejemplo (seed local)
+
+> Propósito: **solo desarrollo local**. Crea un usuario demo con datos de ejemplo para
+> probar la app sin registrarse. Nunca debe ejecutarse contra Atlas.
+
+### Prerequisito
+
+MongoDB corriendo localmente:
+
+```bash
+docker compose up -d mongo
+```
+
+### Comando
+
+```bash
+npm run seed:local
+```
+
+Crea (de forma idempotente):
+
+- **18 categorías** (fijas y variables, según `src/lib/default-categories.ts`).
+- **10 transacciones** de ejemplo del mes en curso.
+- Usuario **`prueba@cashinsight.app`** / `CashinsightDemo123!` con perfil financiero y
+  meta de emergencia.
+
+### Guardas
+
+- **Idempotente:** si ya existe data de ejemplo, no la duplica (`[seed:local] Ya existe data`).
+- **Anti-remota:** aborta si `MONGODB_URI` no apunta a localhost (`localhost`, `127.0.0.1`,
+  `::1` o `*.local`), salvo que se fuerce con `SEED_ALLOW_REMOTE=1`.
+
+> ⚠️ **NUNCA** ejecutar contra Atlas salvo una migración deliberada con
+> `SEED_ALLOW_REMOTE=1`. El `/api/seed` HTTP ya **no existe** como ruta (fue eliminado del
+> código y de los manifests del build); el seed vive solo en este CLI local.
+
 ## Seguridad
 
 - Mongo solo alcanzable por red docker + `127.0.0.1:27017` (nunca vía túnel; el túnel expone solo `app:3000`).

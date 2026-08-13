@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { CategoryIcon } from '@/components/icons/category-icon';
-import { ExpensesDonutChart } from '@/components/dashboard/expenses-donut-chart';
 import { StatCard, StatCardSkeleton } from '@/components/dashboard/stat-cards';
 import { CoupleBalanceCard } from '@/components/dashboard/couple-balance-card';
 import { BudgetProgressBar } from '@/components/budgets/budget-card';
@@ -22,6 +22,20 @@ interface SettlementPreset {
   amount: number;
   paidBy: PaidBy;
 }
+
+const ExpensesDonutChart = dynamic(
+  () =>
+    import('@/components/dashboard/expenses-donut-chart').then((mod) => mod.ExpensesDonutChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="card-brutal flex h-full flex-col p-5" aria-hidden="true">
+        <div className="h-5 w-56 animate-pulse bg-ink/10" />
+        <div className="mt-4 min-h-72 flex-1 animate-pulse bg-ink/10" />
+      </div>
+    ),
+  }
+);
 
 function FinancialHealthCard({ health }: { health: FinancialHealth }) {
   return (
