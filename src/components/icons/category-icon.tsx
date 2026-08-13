@@ -109,6 +109,15 @@ const iconElements: Record<string, JSX.Element> = {
       <path d="M6 12h.01M18 12h.01" />
     </>
   ),
+  paw: (
+    <>
+      <circle cx="5" cy="10" r="2" />
+      <circle cx="9" cy="5" r="2" />
+      <circle cx="15" cy="5" r="2" />
+      <circle cx="19" cy="10" r="2" />
+      <path d="M6.5 12.5c0 3 2.5 5.5 5.5 5.5s5.5-2.5 5.5-5.5c0-1.5-.5-2.5-.5-2.5S16 12 12 12s-5-2-5-2-.5 1-.5 2.5z" />
+    </>
+  ),
 };
 
 export function CategoryIcon({ name, className }: CategoryIconProps) {

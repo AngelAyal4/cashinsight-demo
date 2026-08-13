@@ -97,7 +97,7 @@ export function BudgetCard({ budget, currency, onEdit, onDelete }: BudgetCardPro
         </p>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
         <button
           type="button"
           onClick={() => onEdit(budget)}

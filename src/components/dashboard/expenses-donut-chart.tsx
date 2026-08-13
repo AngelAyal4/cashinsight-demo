@@ -14,6 +14,7 @@ const iconByName: Record<string, string> = {
   Impuesto: 'receipt',
   Tarjeta: 'card',
   Prestamos: 'banknote',
+  Mascotas: 'paw',
   Otro: 'dots',
   Sueldo: 'briefcase',
   Freelance: 'laptop',

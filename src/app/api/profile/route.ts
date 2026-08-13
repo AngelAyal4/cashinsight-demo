@@ -25,6 +25,19 @@ const profileUpdateSchema = z.object({
   baseCurrency: z.enum(['ARS', 'USD', 'EUR']).optional(),
   savingsCurrency: z.enum(['ARS', 'USD', 'EUR']).optional(),
   avatar: z.enum(avatarValues).optional(),
+  coupleSplit: z
+    .enum([
+      '90/10',
+      '80/20',
+      '70/30',
+      '60/40',
+      '50/50',
+      '40/60',
+      '30/70',
+      '20/80',
+      '10/90',
+    ])
+    .optional(),
 });
 
 const passwordChangeSchema = z.object({
@@ -152,6 +165,9 @@ export async function PATCH(request: Request) {
         ? { savingsCurrency: updates.savingsCurrency }
         : {}),
       ...(updates.avatar !== undefined ? { avatar: updates.avatar } : {}),
+      ...(updates.coupleSplit !== undefined
+        ? { coupleSplit: updates.coupleSplit }
+        : {}),
     });
     const savedProfile = await profile.save();
 

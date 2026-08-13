@@ -24,33 +24,44 @@ const baseTransactionSchema = z.object({
 const paidBySchema = z.enum(['yo', 'pareja', 'compartido']).nullable().optional();
 /** El resto de los tipos rechaza un paidBy explícito (400). */
 const noPaidBySchema = z.null({ message: 'Solo los gastos admiten "¿Quién pagó?"' }).optional();
+/** El origen del ahorro solo se admite en depósitos a metas (tipo saving). */
+const savingSourceSchema = z.enum(['income', 'external']);
+/** El resto de los tipos rechaza un savingSource explícito (400). */
+const noSavingSourceSchema = z.null({
+  message: 'Solo los ahorros admiten el origen del dinero',
+}).optional();
 
 const transactionSchema = z.discriminatedUnion('type', [
   baseTransactionSchema.extend({
     type: z.literal('income'),
     category: objectIdSchema,
     paidBy: noPaidBySchema,
+    savingSource: noSavingSourceSchema,
   }),
   baseTransactionSchema.extend({
     type: z.literal('expense'),
     category: objectIdSchema,
     paidBy: paidBySchema,
+    savingSource: noSavingSourceSchema,
   }),
   baseTransactionSchema.extend({
     type: z.literal('saving'),
     goal: objectIdSchema,
     paidBy: noPaidBySchema,
+    savingSource: savingSourceSchema.default('income'),
   }),
   baseTransactionSchema.extend({
     type: z.literal('withdrawal'),
     goal: objectIdSchema,
     paidBy: noPaidBySchema,
+    savingSource: noSavingSourceSchema,
   }),
   baseTransactionSchema.extend({
     type: z.literal('settlement'),
     paidBy: z.enum(['yo', 'pareja'], {
       message: 'Indicá quién recibió la liquidación',
     }),
+    savingSource: noSavingSourceSchema,
   }),
 ]);
 

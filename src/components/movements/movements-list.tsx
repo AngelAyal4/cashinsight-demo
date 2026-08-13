@@ -220,7 +220,7 @@ export function MovementsList({ currency, refreshKey, onEdit }: MovementsListPro
                   <p className="truncate font-bold text-ink">{transaction.description}</p>
                   <p className="text-xs font-medium text-ink/60">
                     {isGoalMovement
-                      ? `Meta: ${goal?.name ?? 'Sin meta'}`
+                      ? `Meta: ${goal?.name ?? 'Sin meta'}${isSaving ? (transaction.savingSource === 'external' ? ' · externo' : '') : ''}`
                       : isSettlement
                         ? `Liquidación · recibió ${
                             transaction.paidBy === 'yo' ? 'vos' : 'tu pareja'

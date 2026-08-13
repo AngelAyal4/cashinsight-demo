@@ -45,6 +45,12 @@ const transactionSchema = new Schema<ITransactionDocument>(
       enum: ['yo', 'pareja', 'compartido', null],
       default: null,
     },
+    /** Origen del ahorro: del ingreso del mes (income) o externo (external). */
+    savingSource: {
+      type: String,
+      enum: ['income', 'external', null],
+      default: null,
+    },
     date: {
       type: Date,
       default: Date.now,

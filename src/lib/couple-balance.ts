@@ -1,4 +1,9 @@
-import type { CoupleBalance, CoupleBalanceStatus, PaidBy } from '@/types';
+import type { CoupleBalance, CoupleBalanceStatus, CoupleSplit, PaidBy } from '@/types';
+import {
+  DEFAULT_COUPLE_SPLIT,
+  getCoupleSharePercent,
+  getPartnerSharePercent,
+} from '@/lib/couple-split';
 
 export interface CoupleBalanceRow {
   type: 'expense' | 'settlement';
@@ -26,17 +31,23 @@ function resolveStatus(net: number): CoupleBalanceStatus {
 
 /**
  * Balance de pareja del mes activo (informativo, sin deudas automáticas):
- * - Gasto `yo` suma a mi aporte, `pareja` al de mi pareja, `compartido` 50/50.
+ * - Gasto `yo` suma a mi aporte, `pareja` al de mi pareja, `compartido` se
+ *   divide según el split configurado (`compartido` default 50/50).
  * - Liquidación `yo` = "yo recibí" (suma al aporte de mi pareja, baja el neto);
  *   `pareja` = "mi pareja recibió" (suma a mi aporte, sube el neto).
  *
  * `net > 0` → tu pareja te debe; `net < 0` → le debés.
  */
-export function computeCoupleBalance(rows: CoupleBalanceRow[]): CoupleBalance {
+export function computeCoupleBalance(
+  rows: CoupleBalanceRow[],
+  split: CoupleSplit = DEFAULT_COUPLE_SPLIT
+): CoupleBalance {
   if (rows.length === 0) {
     return { ...EMPTY_BALANCE };
   }
 
+  const myShare = getCoupleSharePercent(split) / 100;
+  const partnerShare = getPartnerSharePercent(split) / 100;
   let paidByMe = 0;
   let paidByPartner = 0;
 
@@ -59,8 +70,8 @@ export function computeCoupleBalance(rows: CoupleBalanceRow[]): CoupleBalance {
     } else if (row.paidBy === 'pareja') {
       paidByPartner += row.total;
     } else if (row.paidBy === 'compartido') {
-      paidByMe += row.total / 2;
-      paidByPartner += row.total / 2;
+      paidByMe += row.total * myShare;
+      paidByPartner += row.total * partnerShare;
     }
   }
 

@@ -19,6 +19,7 @@ const updateTransactionSchema = z.object({
   category: objectIdSchema.optional(),
   goal: objectIdSchema.optional(),
   paidBy: z.enum(['yo', 'pareja', 'compartido']).nullable().optional(),
+  savingSource: z.enum(['income', 'external']).optional(),
   date: z.coerce.date().optional(),
   notes: z.string().trim().max(500).optional(),
   isRecurring: z.boolean().optional(),
@@ -164,6 +165,17 @@ export async function PATCH(request: Request, context: RouteContext) {
     } else if (nextType !== 'settlement') {
       // Al salir de "gasto", el movimiento deja de participar del balance.
       transaction.paidBy = null;
+    }
+    if (nextType === 'saving') {
+      transaction.savingSource = data.savingSource ?? transaction.savingSource ?? 'income';
+    } else if (data.savingSource !== undefined) {
+      // El origen del ahorro solo aplica a depósitos a metas.
+      return NextResponse.json(
+        { error: 'Solo los ahorros admiten el origen del dinero' },
+        { status: 400 }
+      );
+    } else {
+      transaction.savingSource = null;
     }
     if (data.amount !== undefined) transaction.amount = data.amount;
     if (data.description !== undefined) transaction.description = data.description;

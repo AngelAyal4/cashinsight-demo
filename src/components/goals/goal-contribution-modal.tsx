@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { MoneyInput } from '@/components/ui/money-input';
 import { formatCurrency } from '@/lib/format';
-import type { GoalProgress } from '@/types';
+import type { GoalProgress, SavingSource } from '@/types';
 
 interface GoalContributionModalProps {
   goals: GoalProgress[];
@@ -23,6 +23,7 @@ export function GoalContributionModal({
     goals[0] ? `Aporte a ${goals[0].name}` : ''
   );
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [savingSource, setSavingSource] = useState<SavingSource>('income');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const selectedGoal = goals.find((goal) => goal._id === goalId);
@@ -48,6 +49,7 @@ export function GoalContributionModal({
           amount,
           description,
           date,
+          savingSource,
         }),
       });
       const result: unknown = await response.json();
@@ -110,6 +112,38 @@ export function GoalContributionModal({
             ))}
           </select>
         </label>
+        <fieldset>
+          <legend className="text-sm font-bold text-ink">
+            ¿De dónde sale este ahorro?
+          </legend>
+          <div className="mt-1 grid grid-cols-2 border-2 border-ink bg-white">
+            {(
+              [
+                { value: 'income', label: 'Del ingreso del mes' },
+                { value: 'external', label: 'Dinero externo' },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setSavingSource(option.value)}
+                aria-pressed={savingSource === option.value}
+                className={`border-r-2 border-ink px-2 py-2 text-xs font-bold transition last:border-r-0 ${
+                  savingSource === option.value
+                    ? 'bg-lime text-ink'
+                    : 'bg-white text-ink/60 hover:bg-paper'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs font-medium text-ink/60">
+            {savingSource === 'income'
+              ? 'Sale de tus ingresos del mes y reduce tu disponible para gastar.'
+              : 'No toca los ingresos del mes: es dinero que ya tenías, un regalo u otro ingreso externo.'}
+          </p>
+        </fieldset>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-bold text-ink">
             Monto

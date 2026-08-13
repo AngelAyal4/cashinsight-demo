@@ -121,6 +121,41 @@ describe('computeCoupleBalance', () => {
     expect(balance.paidByPartner).toBe(0);
     expect(balance.net).toBe(1000);
   });
+
+  it('divide los compartidos según el split configurado (90/10)', () => {
+    const balance = computeCoupleBalance(
+      [expenseRow('compartido', 10000)],
+      '90/10'
+    );
+
+    expect(balance.paidByMe).toBe(9000);
+    expect(balance.paidByPartner).toBe(1000);
+    expect(balance.net).toBe(8000);
+    expect(balance.status).toBe('te-deben');
+  });
+
+  it('divide los compartidos según el split configurado (60/40)', () => {
+    const balance = computeCoupleBalance(
+      [expenseRow('compartido', 10000)],
+      '60/40'
+    );
+
+    expect(balance.paidByMe).toBe(6000);
+    expect(balance.paidByPartner).toBe(4000);
+    expect(balance.net).toBe(2000);
+  });
+
+  it('respeta el split inverso (20/80)', () => {
+    const balance = computeCoupleBalance(
+      [expenseRow('compartido', 10000)],
+      '20/80'
+    );
+
+    expect(balance.paidByMe).toBe(2000);
+    expect(balance.paidByPartner).toBe(8000);
+    expect(balance.net).toBe(-6000);
+    expect(balance.status).toBe('debes');
+  });
 });
 
 describe('hasCoupleActivity', () => {

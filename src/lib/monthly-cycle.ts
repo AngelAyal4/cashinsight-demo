@@ -32,7 +32,10 @@ function isDuplicateKeyError(error: unknown): boolean {
 }
 
 interface TypeTotal {
-  _id: 'income' | 'expense' | 'saving' | 'withdrawal';
+  _id: {
+    type: 'income' | 'expense' | 'saving' | 'withdrawal';
+    source: 'income' | 'external' | null;
+  };
   total: number;
 }
 
@@ -76,7 +79,12 @@ async function buildSnapshot(monthKey: string): Promise<IMonthlySnapshot> {
         {
           $facet: {
             byType: [
-              { $group: { _id: '$type', total: { $sum: '$amount' } } },
+              {
+                $group: {
+                  _id: { type: '$type', source: '$savingSource' },
+                  total: { $sum: '$amount' },
+                },
+              },
             ],
             byCategory: [
               { $match: { type: 'expense' } },
@@ -156,11 +164,21 @@ async function buildSnapshot(monthKey: string): Promise<IMonthlySnapshot> {
     count: [],
   }) as FacetResult;
   const totals = new Map<string, number>(
-    facet.byType.map((entry) => [entry._id, entry.total])
+    facet.byType.map((entry) => {
+      const source =
+        entry._id.type === 'saving' && !entry._id.source
+          ? 'income'
+          : entry._id.source;
+      return [
+        source ? `${entry._id.type}:${source}` : entry._id.type,
+        entry.total,
+      ];
+    })
   );
   const income = totals.get('income') ?? 0;
   const expenses = totals.get('expense') ?? 0;
-  const savings = (totals.get('saving') ?? 0) - (totals.get('withdrawal') ?? 0);
+  const savings =
+    (totals.get('saving:income') ?? 0) - (totals.get('withdrawal') ?? 0);
   const fixedExpenses = profile?.fixedExpenses ?? 0;
   const variableExpenses = profile?.variableExpenses ?? 0;
   const plannedSavings = Math.max(

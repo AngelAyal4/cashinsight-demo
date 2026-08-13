@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
 import { NotificationsSection } from '@/components/profile/notifications-section';
-import type { CurrencyCode, IFinancialProfile } from '@/types';
+import { COUPLE_SPLITS, DEFAULT_COUPLE_SPLIT } from '@/lib/couple-split';
+import type { CoupleSplit, CurrencyCode, IFinancialProfile } from '@/types';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>('ARS');
   const [savingsCurrency, setSavingsCurrency] = useState<CurrencyCode>('ARS');
+  const [coupleSplit, setCoupleSplit] = useState<CoupleSplit>(DEFAULT_COUPLE_SPLIT);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -45,6 +47,7 @@ export default function ProfilePage() {
         setEmail(loadedProfile.email ?? '');
         setBaseCurrency(loadedProfile.baseCurrency);
         setSavingsCurrency(loadedProfile.savingsCurrency);
+        setCoupleSplit(loadedProfile.coupleSplit ?? DEFAULT_COUPLE_SPLIT);
       } catch (loadError: unknown) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el perfil');
       } finally {
@@ -65,7 +68,7 @@ export default function ProfilePage() {
       const response = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, baseCurrency, savingsCurrency }),
+        body: JSON.stringify({ name, baseCurrency, savingsCurrency, coupleSplit }),
       });
       const result: unknown = await response.json();
 
@@ -220,6 +223,25 @@ export default function ProfilePage() {
                 </label>
               </div>
 
+              <label className="block text-sm font-bold text-ink">
+                Reparto de gastos compartidos
+                <select
+                  value={coupleSplit}
+                  onChange={(event) => setCoupleSplit(event.target.value as CoupleSplit)}
+                  className="form-input"
+                >
+                  {COUPLE_SPLITS.map((split) => (
+                    <option key={split} value={split}>
+                      {split} (vos / pareja)
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="text-xs font-medium text-ink/60">
+                Cómo se divide un gasto marcado como &quot;Compartido&quot; en el
+                balance de pareja.
+              </p>
+
               {message ? (
                 <p className="border-2 border-ink bg-emerald-500 p-3 font-semibold text-white">
                   {message}
@@ -323,9 +345,9 @@ export default function ProfilePage() {
               </div>
             </form>
 <div className="flex h-full flex-col gap-6">
-              <aside className="card-brutal animate-fade-in p-5" style={{ animationDelay: '100ms' }}>
-                <h2 className="text-lg font-extrabold uppercase tracking-tight">Recomendaciones</h2>
-                <ul className="mt-3 space-y-3 text-sm font-medium text-ink/80">
+              <aside className="card-brutal animate-fade-in p-4" style={{ animationDelay: '100ms' }}>
+                <h2 className="text-base font-extrabold uppercase tracking-tight">Recomendaciones</h2>
+                <ul className="mt-2 space-y-1.5 text-xs font-medium text-ink/80">
                   <li className="flex gap-2">
                     <span className="mt-1 h-2 w-2 shrink-0 bg-lime border border-ink" />
                     Registrá los gastos del día para que el puntaje refleje tu situación real.
@@ -351,9 +373,11 @@ export default function ProfilePage() {
                     Anotá también los montos chicos: un café por día se acumula en el mes.
                   </li>
                 </ul>
-                <Link href="/help" className="btn-brutal btn-brutal-secondary mt-4 block text-center">
-                  Obtener más ayuda
-                </Link>
+                <div className="mt-3 flex justify-end">
+                  <Link href="/help" className="btn-brutal btn-brutal-secondary">
+                    Obtener más ayuda
+                  </Link>
+                </div>
               </aside>
               <NotificationsSection />
             </div>

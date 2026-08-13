@@ -298,6 +298,7 @@ export default function Home() {
               <CoupleBalanceCard
                 balance={data.coupleBalance}
                 currency={currency}
+                coupleSplit={data.profile?.coupleSplit}
                 onSettle={openSettlementModal}
               />
             ) : null}
@@ -374,6 +375,7 @@ export default function Home() {
           initialAmount={settlementPreset?.amount}
           initialPaidBy={settlementPreset?.paidBy}
           initialDescription={settlementPreset ? 'Liquidación de pareja' : undefined}
+          coupleSplit={data?.profile?.coupleSplit}
           onSaved={handleSaved}
           onCancel={closeModal}
         />

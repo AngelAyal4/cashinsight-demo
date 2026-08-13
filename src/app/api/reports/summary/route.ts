@@ -26,7 +26,10 @@ import {
 import type { CategoryBehavior, ExpenseByCategory } from '@/types';
 
 interface TypeTotal {
-  _id: 'income' | 'expense' | 'saving' | 'withdrawal';
+  _id: {
+    type: 'income' | 'expense' | 'saving' | 'withdrawal';
+    source: 'income' | 'external' | null;
+  };
   total: number;
 }
 
@@ -72,7 +75,12 @@ export async function GET() {
         {
           $facet: {
             byType: [
-              { $group: { _id: '$type', total: { $sum: '$amount' } } },
+              {
+                $group: {
+                  _id: { type: '$type', source: '$savingSource' },
+                  total: { $sum: '$amount' },
+                },
+              },
             ],
             byCategory: [
               { $match: { type: 'expense' } },
@@ -120,7 +128,12 @@ export async function GET() {
         {
           $facet: {
             byType: [
-              { $group: { _id: '$type', total: { $sum: '$amount' } } },
+              {
+                $group: {
+                  _id: { type: '$type', source: '$savingSource' },
+                  total: { $sum: '$amount' },
+                },
+              },
             ],
           },
         },
@@ -141,21 +154,36 @@ export async function GET() {
     const activeTotalsRow = activeTotalDocs[0] ?? { byType: [] };
     const recentTransactions = recentDocs;
 
+    const keyOf = (row: TypeTotal): string => {
+      const source =
+        row._id.type === 'saving' && !row._id.source ? 'income' : row._id.source;
+      return source ? `${row._id.type}:${source}` : row._id.type;
+    };
+
     const totals = new Map<string, number>(
-      facetRow.byType.map((entry) => [entry._id, entry.total])
+      facetRow.byType.map((entry) => [keyOf(entry), entry.total])
     );
     const monthlyIncome = totals.get('income') ?? 0;
     const monthlyExpense = totals.get('expense') ?? 0;
     const monthlySavings =
-      (totals.get('saving') ?? 0) - (totals.get('withdrawal') ?? 0);
+      (totals.get('saving:income') ?? 0) - (totals.get('withdrawal') ?? 0);
 
     const allTimeTotals = new Map<string, number>(
-      activeTotalsRow.byType.map((entry) => [entry._id, entry.total])
+      activeTotalsRow.byType.map((entry) => [keyOf(entry), entry.total])
     );
     let totalBalance = 0;
-    for (const [type, total] of allTimeTotals) {
-      totalBalance +=
-        type === 'income' || type === 'withdrawal' ? total : -total;
+    for (const [key, total] of allTimeTotals) {
+      const [type, source] = key.split(':') as [string, string | undefined];
+
+      if (type === 'income' || type === 'withdrawal') {
+        totalBalance += total;
+      } else if (type === 'saving' && source === 'external') {
+        // El ahorro externo (regalo, ahorro previo) entra al patrimonio sin
+        // haber salido de un ingreso del mes: suma al balance total.
+        totalBalance += total;
+      } else {
+        totalBalance -= total;
+      }
     }
 
     const plannedSavings = profile
@@ -204,7 +232,7 @@ export async function GET() {
         total: row.total,
       })
     );
-    const coupleBalance = computeCoupleBalance(coupleRows);
+    const coupleBalance = computeCoupleBalance(coupleRows, profile?.coupleSplit);
 
     const monthlyBalance = monthlyIncome - monthlyExpense - monthlySavings;
     const incomeDistribution: ExpenseByCategory[] = [

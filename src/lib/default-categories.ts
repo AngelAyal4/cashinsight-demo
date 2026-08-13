@@ -7,6 +7,7 @@ export const DEFAULT_CATEGORIES = [
   { name: 'Delivery', type: 'expense', color: '#fb7185', icon: 'shoppingBag', isDefault: true, behavior: 'variable' },
   { name: 'Gym/Deportes', type: 'expense', color: '#06b6d4', icon: 'bolt', isDefault: true, behavior: 'variable' },
   { name: 'Limpieza', type: 'expense', color: '#a78bfa', icon: 'home', isDefault: true, behavior: 'variable' },
+  { name: 'Mascotas', type: 'expense', color: '#f472b6', icon: 'paw', isDefault: true, behavior: 'variable' },
   { name: 'Reparaciones', type: 'expense', color: '#f97316', icon: 'tag', isDefault: true, behavior: 'variable' },
   { name: 'Servicios', type: 'expense', color: '#64748b', icon: 'bolt', isDefault: true, behavior: 'fijo' },
   { name: 'Impuesto', type: 'expense', color: '#f59e0b', icon: 'receipt', isDefault: true, behavior: 'fijo' },

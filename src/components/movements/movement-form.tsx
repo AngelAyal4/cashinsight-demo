@@ -2,11 +2,14 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { MoneyInput } from '@/components/ui/money-input';
+import { formatCoupleSplit } from '@/lib/couple-split';
 import type {
+  CoupleSplit,
   GoalProgress,
   ICategory,
   ITransaction,
   PaidBy,
+  SavingSource,
   TransactionKind,
 } from '@/types';
 
@@ -47,6 +50,8 @@ interface MovementFormProps {
   initialAmount?: number;
   initialPaidBy?: PaidBy;
   initialDescription?: string;
+  /** Configuración de reparto para gastos "Compartido" (default 50/50). */
+  coupleSplit?: CoupleSplit;
 }
 
 export function MovementForm({
@@ -58,6 +63,7 @@ export function MovementForm({
   initialAmount,
   initialPaidBy,
   initialDescription,
+  coupleSplit,
 }: MovementFormProps) {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [type, setType] = useState<TransactionKind>(
@@ -69,6 +75,9 @@ export function MovementForm({
   );
   const [paidBy, setPaidBy] = useState<PaidBy | null>(
     editing?.paidBy ?? initialPaidBy ?? null
+  );
+  const [savingSource, setSavingSource] = useState<SavingSource>(
+    editing?.savingSource ?? 'income'
   );
   const [categoryId, setCategoryId] = useState(
     editing ? getCategoryId(editing.category) : ''
@@ -121,6 +130,7 @@ export function MovementForm({
         : type === 'settlement'
           ? {}
           : { category: categoryId }),
+      ...(type === 'saving' ? { savingSource } : {}),
       ...(type === 'expense' || type === 'settlement' ? { paidBy } : {}),
     };
 
@@ -199,22 +209,58 @@ export function MovementForm({
           />
         </label>
         {isSettlement ? null : type === 'saving' || type === 'withdrawal' ? (
-          <label className="block text-sm font-bold text-ink">
-            {type === 'withdrawal' ? '¿De cuál meta retirás?' : '¿A cuál meta va este ahorro?'}
-            <select
-              required
-              value={goalId}
-              onChange={(event) => setGoalId(event.target.value)}
-              className="form-input"
-            >
-              <option value="">Elegí una meta</option>
-              {goals.map((goal) => (
-                <option key={goal._id} value={goal._id}>
-                  {goal.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <>
+            <label className="block text-sm font-bold text-ink">
+              {type === 'withdrawal' ? '¿De cuál meta retirás?' : '¿A cuál meta va este ahorro?'}
+              <select
+                required
+                value={goalId}
+                onChange={(event) => setGoalId(event.target.value)}
+                className="form-input"
+              >
+                <option value="">Elegí una meta</option>
+                {goals.map((goal) => (
+                  <option key={goal._id} value={goal._id}>
+                    {goal.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {type === 'saving' ? (
+              <fieldset>
+                <legend className="text-sm font-bold text-ink">
+                  ¿De dónde sale este ahorro?
+                </legend>
+                <div className="mt-1 grid grid-cols-2 border-2 border-ink bg-white">
+                  {(
+                    [
+                      { value: 'income', label: 'Del ingreso del mes' },
+                      { value: 'external', label: 'Dinero externo' },
+                    ] as const
+                  ).map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setSavingSource(option.value)}
+                      aria-pressed={savingSource === option.value}
+                      className={`border-r-2 border-ink px-2 py-2 text-xs font-bold transition last:border-r-0 ${
+                        savingSource === option.value
+                          ? 'bg-lime text-ink'
+                          : 'bg-white text-ink/60 hover:bg-paper'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs font-medium text-ink/60">
+                  {savingSource === 'income'
+                    ? 'Sale de tus ingresos del mes y reduce tu disponible para gastar.'
+                    : 'No toca los ingresos del mes: es dinero que ya tenías, un regalo u otro ingreso externo.'}
+                </p>
+              </fieldset>
+            ) : null}
+          </>
         ) : (
           <label className="block text-sm font-bold text-ink">
             Categoría
@@ -290,7 +336,7 @@ export function MovementForm({
               ))}
             </div>
             <p className="mt-1 text-xs font-medium text-ink/60">
-              Los gastos &quot;Compartido&quot; se dividen 50/50 en el balance
+              Los gastos &quot;Compartido&quot; se dividen {formatCoupleSplit(coupleSplit ?? '50/50')} en el balance
               de pareja.
             </p>
           </fieldset>

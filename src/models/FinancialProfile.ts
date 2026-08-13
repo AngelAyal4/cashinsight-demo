@@ -63,6 +63,21 @@ const financialProfileSchema = new Schema<IFinancialProfileDocument>(
       type: String,
       trim: true,
     },
+    coupleSplit: {
+      type: String,
+      enum: [
+        '90/10',
+        '80/20',
+        '70/30',
+        '60/40',
+        '50/50',
+        '40/60',
+        '30/70',
+        '20/80',
+        '10/90',
+      ],
+      default: '50/50',
+    },
   },
   { timestamps: true }
 );

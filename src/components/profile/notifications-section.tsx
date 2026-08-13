@@ -84,13 +84,15 @@ export function NotificationsSection() {
             Al desactivarlas la app deja de enviarlas; el permiso del navegador
             sigue concedido.
           </p>
-          <button
-            type="button"
-            onClick={handleDeactivate}
-            className="btn-brutal btn-brutal-secondary"
-          >
-            Desactivar
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleDeactivate}
+              className="btn-brutal btn-brutal-secondary"
+            >
+              Desactivar
+            </button>
+          </div>
         </div>
       ) : (
         <div className="mt-4 space-y-3">
@@ -99,14 +101,16 @@ export function NotificationsSection() {
               ? 'El permiso ya está concedido: activalas para volver a recibir avisos.'
               : 'Necesitamos tu permiso para mostrarte avisos del sistema.'}
           </p>
-          <button
-            type="button"
-            onClick={() => void handleActivate()}
-            disabled={requesting}
-            className="btn-brutal"
-          >
-            {requesting ? 'Pidiendo permiso...' : 'Activar notificaciones'}
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => void handleActivate()}
+              disabled={requesting}
+              className="btn-brutal"
+            >
+              {requesting ? 'Pidiendo permiso...' : 'Activar notificaciones'}
+            </button>
+          </div>
         </div>
       )}
     </section>

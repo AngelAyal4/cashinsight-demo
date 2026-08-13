@@ -1,12 +1,15 @@
 'use client';
 
 import { formatCurrency } from '@/lib/format';
-import type { CoupleBalance, CurrencyCode } from '@/types';
+import { formatCoupleSplit } from '@/lib/couple-split';
+import type { CoupleBalance, CoupleSplit, CurrencyCode } from '@/types';
 
 interface CoupleBalanceCardProps {
   balance: CoupleBalance;
   currency: CurrencyCode;
   onSettle: () => void;
+  /** Configuración de reparto para gastos compartidos (default 50/50). */
+  coupleSplit?: CoupleSplit;
 }
 
 function buildMessage(balance: CoupleBalance, currency: CurrencyCode): string {
@@ -23,6 +26,7 @@ export function CoupleBalanceCard({
   balance,
   currency,
   onSettle,
+  coupleSplit,
 }: CoupleBalanceCardProps) {
   const settled = balance.status === 'saldado';
 
@@ -73,9 +77,9 @@ export function CoupleBalanceCard({
         </div>
       </div>
       <p className="mt-3 text-xs font-medium text-ink/70">
-        Los gastos compartidos se dividen 50/50. Las liquidaciones no cuentan
-        como ingreso ni gasto: solo saldan el balance. Si el monto no es exacto,
-        el balance queda con el saldo restante.
+        Los gastos compartidos se dividen {formatCoupleSplit(coupleSplit ?? '50/50')}. Las
+        liquidaciones no cuentan como ingreso ni gasto: solo saldan el balance.
+        Si el monto no es exacto, el balance queda con el saldo restante.
       </p>
     </section>
   );

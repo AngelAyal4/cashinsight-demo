@@ -8,7 +8,19 @@ export type TransactionKind =
   | 'withdrawal'
   | 'settlement';
 export type PaidBy = 'yo' | 'pareja' | 'compartido';
+/** Origen del dinero de un ahorro: del ingreso del mes o externo (regalo, ahorro previo). */
+export type SavingSource = 'income' | 'external';
 export type CoupleBalanceStatus = 'te-deben' | 'debes' | 'saldado';
+export type CoupleSplit =
+  | '90/10'
+  | '80/20'
+  | '70/30'
+  | '60/40'
+  | '50/50'
+  | '40/60'
+  | '30/70'
+  | '20/80'
+  | '10/90';
 export type IncomeAccuracy = 'approximate' | 'exact';
 export type AvatarId =
   | 'bruno'
@@ -50,6 +62,7 @@ export interface ITransaction {
   type: TransactionKind;
   goal?: string | ISavingsGoal;
   paidBy?: PaidBy | null;
+  savingSource?: SavingSource | null;
   date: Date;
   notes?: string;
   isRecurring?: boolean;
@@ -148,6 +161,7 @@ export interface IFinancialProfile {
   avatar?: AvatarId;
   onboardingCompleted: boolean;
   activeMonth?: MonthKey;
+  coupleSplit?: CoupleSplit;
   createdAt?: Date;
   updatedAt?: Date;
 }

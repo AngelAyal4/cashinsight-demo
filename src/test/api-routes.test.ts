@@ -256,12 +256,12 @@ describe('API de categorías', () => {
 
     const first = await seedPOST();
     expect(first.status).toBe(201);
-    expect(await Category.countDocuments()).toBe(17);
+    expect(await Category.countDocuments()).toBe(18);
     expect(await Transaction.countDocuments()).toBe(10);
 
     const second = await seedPOST();
     expect(second.status).toBe(200);
-    expect(await Category.countDocuments()).toBe(17);
+    expect(await Category.countDocuments()).toBe(18);
     expect(await Transaction.countDocuments()).toBe(10);
   });
 
@@ -273,7 +273,7 @@ describe('API de categorías', () => {
     expect(response.status).toBe(200);
 
     const list = (await response.json()) as { name: string }[];
-    expect(list).toHaveLength(17);
+    expect(list).toHaveLength(18);
     expect(list[list.length - 1].name).toBe('Otro');
     expect(list[list.length - 2].name).toBe('Otro');
   });
@@ -446,6 +446,49 @@ describe('API de transacciones (CRUD)', () => {
       })
     );
     expect(response.status).toBe(201);
+  });
+
+  it('guarda el origen del ahorro (income por defecto o external)', async () => {
+    const goalId = await createActiveGoal();
+
+    const defaultSaving = await transactionsPOST(
+      jsonRequest(`${API_URL}/api/transactions`, 'POST', {
+        amount: 5000,
+        description: 'Ahorro del mes',
+        type: 'saving',
+        goal: goalId,
+      })
+    );
+    expect(defaultSaving.status).toBe(201);
+    expect(await bodyOf(defaultSaving)).toHaveProperty('savingSource', 'income');
+
+    const external = await transactionsPOST(
+      jsonRequest(`${API_URL}/api/transactions`, 'POST', {
+        amount: 3000,
+        description: 'Regalo de cumpleaños',
+        type: 'saving',
+        goal: goalId,
+        savingSource: 'external',
+      })
+    );
+    expect(external.status).toBe(201);
+    expect(await bodyOf(external)).toHaveProperty('savingSource', 'external');
+  });
+
+  it('rechaza el origen del ahorro en tipos que no son saving', async () => {
+    const category = await categoryId('Sueldo', 'income');
+
+    const response = await transactionsPOST(
+      jsonRequest(`${API_URL}/api/transactions`, 'POST', {
+        amount: 1000,
+        description: 'Raro',
+        type: 'income',
+        category,
+        savingSource: 'external',
+      })
+    );
+
+    expect(response.status).toBe(400);
   });
 
   it('filtra por tipo y valida los queries', async () => {
@@ -909,10 +952,9 @@ describe('API de presupuestos (CRUD)', () => {
 
   it('incluye solo presupuestos vigentes en el resumen del dashboard', async () => {
     const category = await Category.create({
-      name: 'Mascotas',
+      name: 'Hogar Mascotas',
       type: 'expense',
-    });
-    const categoryId = category._id.toString();
+    });    const categoryId = category._id.toString();
     const now = new Date();
     const monthStart = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
     const monthEnd = isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
@@ -1109,6 +1151,72 @@ describe('API de reportes (resumen del dashboard)', () => {
       5
     );
     expect(summary.savingsRate).toBe(0);
+  });
+
+  it('el ahorro externo no reduce el balance del mes ni la tasa de ahorro', async () => {
+    await createUserWithSession();
+    await seedPOST();
+    const goal = await SavingsGoal.create({
+      name: 'Viaje',
+      goalType: 'travel',
+      targetAmount: 500000,
+      currency: 'ARS',
+      active: true,
+    });
+
+    const external = await transactionsPOST(
+      jsonRequest(`${API_URL}/api/transactions`, 'POST', {
+        amount: 20000,
+        description: 'Regalo',
+        type: 'saving',
+        goal: goal._id.toString(),
+        savingSource: 'external',
+      })
+    );
+    expect(external.status).toBe(201);
+
+    const response = await summaryGET();
+    expect(response.status).toBe(200);
+    const summary = (await response.json()) as Record<string, unknown>;
+
+    // El ahorro externo no sale de los ingresos: el balance del mes se mantiene.
+    expect(summary.monthlyIncome).toBe(233000);
+    expect(summary.monthlyExpense).toBe(83700);
+    expect(summary.monthlyBalance).toBe(149300);
+    expect(summary.savingsRate).toBe(0);
+    // Pero entra al patrimonio general: suma al balance total.
+    expect(summary.totalBalance).toBe(169300);
+  });
+
+  it('el ahorro desde ingresos reduce el balance del mes', async () => {
+    await createUserWithSession();
+    await seedPOST();
+    const goal = await SavingsGoal.create({
+      name: 'Viaje',
+      goalType: 'travel',
+      targetAmount: 500000,
+      currency: 'ARS',
+      active: true,
+    });
+
+    const saving = await transactionsPOST(
+      jsonRequest(`${API_URL}/api/transactions`, 'POST', {
+        amount: 20000,
+        description: 'Ahorro del mes',
+        type: 'saving',
+        goal: goal._id.toString(),
+        savingSource: 'income',
+      })
+    );
+    expect(saving.status).toBe(201);
+
+    const response = await summaryGET();
+    expect(response.status).toBe(200);
+    const summary = (await response.json()) as Record<string, unknown>;
+
+    expect(summary.monthlySavings).toBe(20000);
+    expect(summary.monthlyBalance).toBe(129300);
+    expect(summary.savingsRate).toBeCloseTo((20000 / 233000) * 100, 2);
   });
 });
 
