@@ -58,7 +58,9 @@ async function createUser(email = 'reset@example.com'): Promise<string> {
 /** Corre forgot y devuelve el token plano que la route imprime en consola. */
 async function requestToken(): Promise<string> {
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-  const response = await forgotPOST();
+  const response = await forgotPOST(
+    new Request('http://localhost/api/auth/forgot', { method: 'POST' })
+  );
   expect(response.status).toBe(200);
 
   const logged = logSpy.mock.calls.map((call) => String(call[0])).join('\n');
@@ -87,7 +89,9 @@ describe('Recuperación de contraseña', () => {
     await createUser();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    const response = await forgotPOST();
+    const response = await forgotPOST(
+      new Request('http://localhost/api/auth/forgot', { method: 'POST' })
+    );
 
     expect(response.status).toBe(200);
     const body = await bodyOf(response);
@@ -110,7 +114,9 @@ describe('Recuperación de contraseña', () => {
   it('forgot sin usuario responde 200 genérico y no imprime token', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    const response = await forgotPOST();
+    const response = await forgotPOST(
+      new Request('http://localhost/api/auth/forgot', { method: 'POST' })
+    );
     const logged = logSpy.mock.calls.map((call) => String(call[0])).join('\n');
     logSpy.mockRestore();
 

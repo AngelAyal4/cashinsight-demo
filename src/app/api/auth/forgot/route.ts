@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
+import { isRateLimited, rateLimitResponse } from '@/lib/rate-limit';
 import {
   RESET_TOKEN_TTL_SECONDS,
   createPasswordResetToken,
@@ -10,9 +11,10 @@ const GENERIC_RESPONSE = {
   message: 'Token de recuperación generado (revisá la consola del server)',
 };
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     await connectDB();
+    if (await isRateLimited('forgot', request)) return rateLimitResponse();
 
     const user = await User.findOne();
 

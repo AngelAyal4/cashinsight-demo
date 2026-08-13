@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { connectDB } from '@/lib/db';
+import { isRateLimited, rateLimitResponse } from '@/lib/rate-limit';
 import { createSessionCookie } from '@/lib/auth';
 import { verifyPassword } from '@/lib/password';
 import { User } from '@/models/User';
@@ -18,6 +19,9 @@ const INVALID_CREDENTIALS = { error: 'Credenciales inválidas' };
 
 export async function POST(request: Request) {
   try {
+    await connectDB();
+    if (await isRateLimited('login', request)) return rateLimitResponse();
+
     const body: unknown = await request.json();
     const parsed = loginSchema.safeParse(body);
 
@@ -27,8 +31,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    await connectDB();
 
     const email = parsed.data.email.toLowerCase().trim();
     const user = await User.findOne({ email }).select('+passwordHash');

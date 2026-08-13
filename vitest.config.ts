@@ -15,6 +15,7 @@ export default defineConfig({
         'src/lib/password.ts',
         'src/lib/session.ts',
         'src/lib/password-reset.ts',
+        'src/lib/rate-limit.ts',
         'src/proxy.ts',
         'src/lib/monthly-date.ts',
         'src/lib/monthly-cycle.ts',

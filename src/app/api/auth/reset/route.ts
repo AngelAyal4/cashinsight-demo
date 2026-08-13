@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { destroySessionCookie } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
+import { isRateLimited, rateLimitResponse } from '@/lib/rate-limit';
 import { hashPassword } from '@/lib/password';
 import {
   hashPasswordResetToken,
@@ -23,6 +24,9 @@ const INVALID_TOKEN = {
 
 export async function POST(request: Request) {
   try {
+    await connectDB();
+    if (await isRateLimited('reset', request)) return rateLimitResponse();
+
     const body: unknown = await request.json();
     const parsed = resetSchema.safeParse(body);
 
@@ -38,8 +42,6 @@ export async function POST(request: Request) {
     if (!payload) {
       return NextResponse.json(INVALID_TOKEN, { status: 400 });
     }
-
-    await connectDB();
 
     const user = await User.findById(payload.sub).select(
       '+passwordHash +passwordResetTokenHash +passwordResetExpiresAt'

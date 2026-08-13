@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { connectDB } from '@/lib/db';
+import { isRateLimited, rateLimitResponse } from '@/lib/rate-limit';
 import { createSessionCookie } from '@/lib/auth';
 import { hashPassword } from '@/lib/password';
 import { User } from '@/models/User';
@@ -25,6 +26,9 @@ function isDuplicateKeyError(error: unknown): boolean {
 
 export async function POST(request: Request) {
   try {
+    await connectDB();
+    if (await isRateLimited('register', request)) return rateLimitResponse();
+
     const body: unknown = await request.json();
     const parsed = registerSchema.safeParse(body);
 
@@ -35,7 +39,6 @@ export async function POST(request: Request) {
       );
     }
 
-    await connectDB();
     await User.init();
 
     const email = parsed.data.email.toLowerCase().trim();
