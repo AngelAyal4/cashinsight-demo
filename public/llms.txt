@@ -1,0 +1,15 @@
+# CashinsightApp
+
+> App web privada y single-user de finanzas personales: presupuesto mensual,
+> límites de gasto variable, metas de ahorro y reportes de cierre mensual.
+> Interfaz en español.
+
+## Superficies públicas
+
+- /login — inicio de sesión (noindex)
+- /register — registro de cuenta única (noindex)
+
+## Notas
+
+- El resto de la app requiere sesión y no es indexable.
+- /api/* no es pública.

@@ -1,5 +1,28 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { AuthForm } from '@/components/auth/auth-form';
+
+export const metadata: Metadata = {
+  title: 'Crear cuenta',
+  description: 'Registrá tu única cuenta en CashinsightApp: una app personal de presupuestos y metas de ahorro.',
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: 'CashinsightApp',
+    description: 'Gestioná tus metas de ahorro y tus gastos de forma simple y brutalista.',
+    type: 'website',
+    url: '/register',
+    siteName: 'CashinsightApp',
+    locale: 'es_AR',
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'CashinsightApp — finanzas personales mensuales',
+      },
+    ],
+  },
+};
 
 export default function RegisterPage() {
   return (

@@ -25,6 +25,8 @@ export default defineConfig({
         'src/lib/format.ts',
         'src/lib/notification-triggers.ts',
         'src/app/api/**/route.ts',
+        'src/app/robots.ts',
+        'src/app/sitemap.ts',
       ],
       thresholds: {
         lines: 70,

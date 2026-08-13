@@ -13,9 +13,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "CashinsightApp",
+  metadataBase: new URL(appUrl),
+  title: {
+    default: "CashinsightApp — Metas de ahorro y gastos, mes a mes",
+    template: "%s — CashinsightApp",
+  },
   description: "Gestioná tus metas de ahorro y tus gastos de forma simple y brutalista.",
+  robots: { index: false, follow: false }, // política base segura: app privada
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
