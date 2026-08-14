@@ -117,6 +117,22 @@ La URL deja de ser efímera y pasa a ser la del dominio propio.
 > Next.js fullstack (API routes en el mismo repo) en Vercel Hobby ($0) + MongoDB Atlas M0 free (512MB).
 > Pasos para el **usuario**: crear los recursos en Atlas y Vercel; el repo ya está listo para este deploy.
 
+### ✅ ESTADO ACTUAL (2026-08-14) — DEPLOY COMPLETADO
+
+- **App:** https://cashinsight-app.vercel.app
+- **Base:** Atlas M0, cluster `CashinsightApp`, AWS / São Paulo (sa-east-1)
+- **URI de conexión:** `mongodb+srv://ajoseayala00_db_user:***@cashinsightapp.st7ozou.mongodb.net/cashinsightapp?appName=CashinsightApp` (en panel Vercel, nunca en repo)
+- **Env vars en Vercel:** `MONGODB_URI`, `JWT_SECRET`, `NEXT_PUBLIC_APP_URL` (Production + Preview)
+- **Usuario migrado:** `prueba@cashinsight.app` (contraseña reestablecida vía forgot/reset + logs Vercel durante el deploy; en poder del usuario)
+- **Migración:** backup local `backups/local-pre-vercel-20260814-004329.gz` → `mongorestore --drop` a Atlas → conteos verificados (users 1, categories 18, transactions 2, goals 3, budgets 2, profiles 1)
+- **Verificado:** login real, escritura persiste tras redeploy (transacción de prueba), PWA activated, rate limiting 429, backups Atlas OK
+- **Backups Atlas:** `backups/atlas-cashinsight-20260814-012044.gz` (2 tx) y `-012756.gz` (3 tx)
+- **Pendiente menor:** eliminar movimiento de prueba en la app (si quedó); copiar backup fuera de la PC
+- **Comando para cargar la URI sin exponerla:**
+  ```bash
+  read -r -s -p 'Pegá SOLO la URI de Atlas: ' ATLAS_URI; printf '\n'
+  ```
+
 ### 10.1 Crear el cluster Atlas
 
 1. Ir a https://cloud.mongodb.com → New Project → Create Cluster → plan **M0** (free forever, 512MB), nombre del cluster: `cashinsight`.
