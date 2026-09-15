@@ -47,8 +47,19 @@ evidencia/
 # Prompts y agentes internos (no código)
 prompts/
 
+# Docs y specs internos (no código)
+docs/
+specs/
+
+# Memory de agentes
+memory/
+
+# Coverage
+coverage/
+
 # Misc
 *.log
 .cache/
 .tmp/
 .temp/
+CLAUDE.md
