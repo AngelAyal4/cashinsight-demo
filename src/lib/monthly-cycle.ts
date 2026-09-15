@@ -208,7 +208,9 @@ async function buildSnapshot(monthKey: string): Promise<IMonthlySnapshot> {
   const totalVariable = expensesByCategory
     .filter((row) => row.behavior === 'variable')
     .reduce((sum, row) => sum + row.total, 0);
-  const totalFixed = expenses - totalVariable;
+  const totalFixed = expensesByCategory
+    .filter((row) => row.behavior === 'fijo')
+    .reduce((sum, row) => sum + row.total, 0);
 
   const contributionsByGoal = new Map(
     goalContributions.map((entry) => [
