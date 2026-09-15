@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
@@ -9,6 +9,8 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
   const isLogin = mode === 'login';
 
   const [email, setEmail] = useState('');
@@ -40,7 +42,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
 
-      router.replace(isLogin ? '/' : '/onboarding');
+      const destination = isLogin
+        ? (redirect ?? '/')
+        : '/onboarding';
+      router.replace(destination);
       router.refresh();
     } catch {
       setError('No se pudo conectar con el servidor. Intentá de nuevo.');

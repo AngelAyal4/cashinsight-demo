@@ -54,14 +54,14 @@ describe('proxy', () => {
     const response = proxy(buildRequest('/metas'));
 
     expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe('http://localhost:3000/login');
+    expect(response.headers.get('location')).toBe('http://localhost:3000/login?redirect=%2Fmetas');
   });
 
   it('redirige a /login la raíz sin sesión', () => {
     const response = proxy(buildRequest('/'));
 
     expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe('http://localhost:3000/login');
+    expect(response.headers.get('location')).toBe('http://localhost:3000/login?redirect=%2F');
   });
 
   it('redirige a /login el onboarding sin sesión', () => {

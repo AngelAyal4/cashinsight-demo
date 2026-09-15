@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth/auth-form';
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RegisterPage() {
+function RegisterContent() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-paper px-4 py-12">
       <div className="w-full max-w-md">
@@ -51,5 +52,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
   );
 }
