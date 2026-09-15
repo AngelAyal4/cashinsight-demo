@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { MoneyInput } from '@/components/ui/money-input';
 import { formatCoupleSplit } from '@/lib/couple-split';
+import { isDemoMode } from '@/lib/demo';
 import type {
   CoupleSplit,
   GoalProgress,
@@ -21,16 +22,27 @@ const movementLabels: Record<TransactionKind, string> = {
   settlement: 'Liquidación',
 };
 
-const paidByOptions: { value: PaidBy; label: string }[] = [
-  { value: 'yo', label: 'Angel' },
-  { value: 'pareja', label: 'Macarena' },
-  { value: 'compartido', label: 'Compartido' },
-];
+const paidByOptions: { value: PaidBy; label: string }[] = isDemoMode()
+  ? [
+      { value: 'yo', label: 'yo' },
+      { value: 'pareja', label: 'pareja' },
+      { value: 'compartido', label: 'Compartido' },
+    ]
+  : [
+      { value: 'yo', label: 'Angel' },
+      { value: 'pareja', label: 'Macarena' },
+      { value: 'compartido', label: 'Compartido' },
+    ];
 
-const settlementOptions: { value: 'yo' | 'pareja'; label: string }[] = [
-  { value: 'yo', label: 'Angel' },
-  { value: 'pareja', label: 'Macarena' },
-];
+const settlementOptions: { value: 'yo' | 'pareja'; label: string }[] = isDemoMode()
+  ? [
+      { value: 'yo', label: 'yo' },
+      { value: 'pareja', label: 'pareja' },
+    ]
+  : [
+      { value: 'yo', label: 'Angel' },
+      { value: 'pareja', label: 'Macarena' },
+    ];
 
 function getCategoryId(category: ITransaction['category']): string {
   return typeof category === 'object' ? category._id ?? '' : category ?? '';

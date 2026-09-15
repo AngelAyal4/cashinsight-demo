@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { CategoryIcon } from '@/components/icons/category-icon';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { isDemoMode } from '@/lib/demo';
 import type {
   CurrencyCode,
   ICategory,
@@ -20,11 +21,17 @@ const movementLabels: Record<TransactionKind, string> = {
   settlement: 'Liquidación',
 };
 
-const paidByLabels: Record<PaidBy, string> = {
-  yo: 'Angel',
-  pareja: 'Macarena',
-  compartido: 'compartido',
-};
+const paidByLabels: Record<PaidBy, string> = isDemoMode()
+  ? {
+      yo: 'yo',
+      pareja: 'pareja',
+      compartido: 'compartido',
+    }
+  : {
+      yo: 'Angel',
+      pareja: 'Macarena',
+      compartido: 'compartido',
+    };
 
 type SortOption = 'amount-desc' | 'amount-asc' | 'date' | 'category';
 
