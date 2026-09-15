@@ -126,3 +126,91 @@ export function useReportDetail(monthKey: string | null): UseReportDetailResult 
 
   return { report, loading, error };
 }
+
+interface UseDeleteReportResult {
+  loading: boolean;
+  error: string | null;
+  deleteReport: (monthKey: string) => Promise<boolean>;
+}
+
+export function useDeleteReport(): UseDeleteReportResult {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteReport = useCallback(
+    async (monthKey: string): Promise<boolean> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/reports/${monthKey}`, {
+          method: 'DELETE',
+        });
+        const body: unknown = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            typeof body === 'object' && body !== null && 'error' in body
+              ? String(body.error)
+              : 'Error al eliminar el reporte'
+          );
+        }
+
+        return true;
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Error al eliminar el reporte'
+        );
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  return { loading, error, deleteReport };
+}
+
+interface UseResetReportsResult {
+  loading: boolean;
+  error: string | null;
+  resetReports: () => Promise<boolean>;
+}
+
+export function useResetReports(onReset: () => void): UseResetReportsResult {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const resetReports = useCallback(async (): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/reports/reset', {
+        method: 'DELETE',
+      });
+      const body: unknown = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof body === 'object' && body !== null && 'error' in body
+            ? String(body.error)
+            : 'Error al resetear los reportes'
+        );
+      }
+
+      onReset();
+      return true;
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Error al resetear los reportes'
+      );
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [onReset]);
+
+  return { loading, error, resetReports };
+}

@@ -22,14 +22,14 @@ const movementLabels: Record<TransactionKind, string> = {
 };
 
 const paidByOptions: { value: PaidBy; label: string }[] = [
-  { value: 'yo', label: 'Vos' },
-  { value: 'pareja', label: 'Pareja' },
+  { value: 'yo', label: 'Angel' },
+  { value: 'pareja', label: 'Macarena' },
   { value: 'compartido', label: 'Compartido' },
 ];
 
 const settlementOptions: { value: 'yo' | 'pareja'; label: string }[] = [
-  { value: 'yo', label: 'Vos' },
-  { value: 'pareja', label: 'Tu pareja' },
+  { value: 'yo', label: 'Angel' },
+  { value: 'pareja', label: 'Macarena' },
 ];
 
 function getCategoryId(category: ITransaction['category']): string {
