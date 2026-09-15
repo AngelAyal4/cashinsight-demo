@@ -6,7 +6,7 @@ import { ProgressBar } from '@tremor/react';
 import { CategoryIcon } from '@/components/icons/category-icon';
 import { ExpensesDonutChart } from '@/components/dashboard/expenses-donut-chart';
 import { monthLabelOf } from '@/components/reports/reports-list';
-import { useReportDetail } from '@/hooks/use-reports';
+import { useDeleteReport, useReportDetail } from '@/hooks/use-reports';
 import { formatCurrency } from '@/lib/format';
 import type { CurrencyCode, ExpenseByCategory, IMonthlySnapshot } from '@/types';
 
@@ -206,6 +206,7 @@ interface ReportsDetailProps {
 export function ReportsDetail({ monthKey }: ReportsDetailProps) {
   const router = useRouter();
   const { report, loading, error } = useReportDetail(monthKey);
+  const { deleteReport, loading: deleting, error: deleteError } = useDeleteReport();
 
   if (loading) {
     return <div className="mt-8 h-80 animate-pulse bg-ink/10" />;
@@ -228,6 +229,18 @@ export function ReportsDetail({ monthKey }: ReportsDetailProps) {
     );
   }
 
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      `¿Estás seguro de que querés eliminar el reporte de ${monthLabelOf(report.monthKey)}? Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    const success = await deleteReport(report.monthKey);
+    if (success) {
+      router.push('/report');
+    }
+  };
+
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -239,14 +252,33 @@ export function ReportsDetail({ monthKey }: ReportsDetailProps) {
             Snapshot del cierre mensual · {report.transactionsCount} movimientos
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push('/report')}
-          className="btn-brutal btn-brutal-sm btn-brutal-secondary"
-        >
-          ← Volver al historial
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="btn-brutal btn-brutal-sm btn-brutal-danger"
+          >
+            {deleting ? 'Eliminando...' : '🗑 Eliminar reporte'}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/report')}
+            className="btn-brutal btn-brutal-sm btn-brutal-secondary"
+          >
+            ← Volver al historial
+          </button>
+        </div>
       </div>
+
+      {deleteError ? (
+        <section
+          role="alert"
+          className="border-2 border-rose-600 bg-rose-50 p-4 font-semibold text-rose-700 shadow-[4px_4px_0_0_#111111]"
+        >
+          <p>{deleteError}</p>
+        </section>
+      ) : null}
 
       <section aria-label="Rendimiento del mes" className="card-brutal p-5">
         <h3 className="text-sm font-bold uppercase tracking-wider text-ink/60">

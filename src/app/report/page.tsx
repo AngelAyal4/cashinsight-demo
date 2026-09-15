@@ -2,11 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useMemo } from 'react';
+import { Suspense, useCallback, useMemo } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { ReportsEmptyState } from '@/components/reports/reports-empty-state';
 import { ReportsList } from '@/components/reports/reports-list';
-import { useReports } from '@/hooks/use-reports';
+import { useDeleteReport, useReports, useResetReports } from '@/hooks/use-reports';
 import { isValidMonthKey } from '@/lib/monthly-date';
 
 const ReportsDetail = dynamic(
@@ -30,6 +30,33 @@ function ReportsContent() {
   }, [searchParams]);
 
   const { reports, loading, error, retry } = useReports();
+  const { resetReports, loading: resetting, error: resetError } = useResetReports(retry);
+  const { deleteReport, loading: deleting } = useDeleteReport();
+
+  const handleDeleteFromList = useCallback(
+    async (monthKey: string) => {
+      const success = await deleteReport(monthKey);
+      if (success) {
+        // Si el mes eliminado era el seleccionado, volver al listado
+        if (selectedMonth === monthKey) {
+          window.location.href = '/report';
+        } else {
+          retry();
+        }
+      }
+    },
+    [deleteReport, selectedMonth, retry]
+  );
+
+  const handleResetAll = async () => {
+    const confirmed = window.confirm(
+      '¿Estás seguro de que querés eliminar TODOS los reportes? Esta acción no se puede deshacer.'
+    );
+    if (!confirmed) return;
+    await resetReports();
+  };
+
+  const showResetButton = !loading && reports.length > 0 && !selectedMonth;
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -45,6 +72,16 @@ function ReportsContent() {
               Cada cierre de mes compacta tus movimientos en un reporte.
             </p>
           </div>
+          {showResetButton ? (
+            <button
+              type="button"
+              onClick={handleResetAll}
+              disabled={resetting}
+              className="btn-brutal btn-brutal-danger"
+            >
+              {resetting ? 'Eliminando...' : '🗑 Resetear todos'}
+            </button>
+          ) : null}
         </div>
 
         {error ? (
@@ -61,6 +98,13 @@ function ReportsContent() {
               Reintentar
             </button>
           </section>
+        ) : resetError ? (
+          <section
+            role="alert"
+            className="mt-8 border-2 border-rose-600 bg-rose-50 p-5 font-semibold text-rose-700 shadow-[4px_4px_0_0_#111111]"
+          >
+            <p>{resetError}</p>
+          </section>
         ) : selectedMonth ? (
           <ReportsDetail monthKey={selectedMonth} />
         ) : loading ? (
@@ -72,7 +116,7 @@ function ReportsContent() {
         ) : reports.length === 0 ? (
           <ReportsEmptyState />
         ) : (
-          <ReportsList reports={reports} />
+          <ReportsList reports={reports} onDelete={handleDeleteFromList} />
         )}
       </main>
     </div>
