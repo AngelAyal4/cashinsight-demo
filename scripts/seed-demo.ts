@@ -16,6 +16,9 @@ import { Budget } from '@/models/Budget';
 import { SavingsGoal } from '@/models/SavingsGoal';
 import { MonthlySnapshot } from '@/models/MonthlySnapshot';
 import { FinancialProfile } from '@/models/FinancialProfile';
+import { User } from '@/models/User';
+import { hashPassword } from '@/lib/password';
+import { DEMO_CREDENTIALS } from '@/lib/demo';
 import { DEFAULT_CATEGORIES } from '@/lib/default-categories';
 
 const DEMO_USER_ID = 'demo-user-recruiter';
@@ -35,8 +38,21 @@ async function seedDemo(): Promise<void> {
     SavingsGoal.deleteMany({}),
     MonthlySnapshot.deleteMany({}),
     FinancialProfile.deleteMany({}),
+    User.deleteMany({}),
   ]);
   console.log('[seed:demo] Datos demo previos eliminados.');
+
+  // 0. Usuario demo
+  const demoUser = await User.findOne({ email: DEMO_CREDENTIALS.email });
+  if (!demoUser) {
+    await User.create({
+      email: DEMO_CREDENTIALS.email,
+      passwordHash: await hashPassword(DEMO_CREDENTIALS.password),
+    });
+    console.log(`[seed:demo] Usuario demo creado: ${DEMO_CREDENTIALS.email}`);
+  } else {
+    console.log(`[seed:demo] Usuario demo ya existía: ${DEMO_CREDENTIALS.email}`);
+  }
 
   // 1. Categorías
   const categories = await Category.insertMany(

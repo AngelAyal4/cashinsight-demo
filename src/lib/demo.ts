@@ -7,6 +7,11 @@
 
 export const DEMO_USER_ID = 'demo-user-recruiter' as const;
 
+export const DEMO_CREDENTIALS = {
+  email: 'demo@cashinsight.app',
+  password: 'Demo1234!',
+} as const;
+
 export function isDemoMode(): boolean {
   return process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 }
