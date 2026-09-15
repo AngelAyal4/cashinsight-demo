@@ -21,8 +21,8 @@ const movementLabels: Record<TransactionKind, string> = {
 };
 
 const paidByLabels: Record<PaidBy, string> = {
-  yo: 'vos',
-  pareja: 'tu pareja',
+  yo: 'Angel',
+  pareja: 'Macarena',
   compartido: 'compartido',
 };
 
