@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth/auth-form';
 import { PasswordRecovery } from '@/components/auth/password-recovery';
+import { DemoLoginButton } from '@/components/auth/demo-login-button';
 import { isDemoMode } from '@/lib/demo';
 
 export const metadata: Metadata = {
@@ -61,25 +62,7 @@ function LoginContent() {
 
         <div className="card-brutal animate-fade-in p-6">
           <AuthForm mode="login" />
-          {isDemoMode() ? (
-            <div className="mt-4 border-t-2 border-ink/10 pt-4">
-              <button
-                type="button"
-                onClick={async () => {
-                  const res = await fetch('/api/auth/demo-login', { method: 'POST' });
-                  if (res.ok) {
-                    window.location.href = '/';
-                  }
-                }}
-                className="btn-brutal btn-brutal-secondary w-full"
-              >
-                🎯 Entrar como demo
-              </button>
-              <p className="mt-2 text-center text-xs font-medium text-ink/60">
-                demo@cashinsight.app — datos ficticios
-              </p>
-            </div>
-          ) : null}
+          <DemoLoginButton isDemo={isDemoMode()} />
           <p className="mt-5 text-center text-sm font-medium text-ink/70">
             ¿No tenés cuenta?{' '}
             <Link href="/register" className="font-bold text-ink underline">
