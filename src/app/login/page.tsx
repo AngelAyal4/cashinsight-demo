@@ -1,10 +1,16 @@
 import Link from 'next/link';
+import Head from 'next/head';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth/auth-form';
 import { PasswordRecovery } from '@/components/auth/password-recovery';
 import { DemoLoginButton } from '@/components/auth/demo-login-button';
 import { isDemoMode } from '@/lib/demo';
+
+/**
+ * JSON-LD se inyecta vía next/head para evitar dangerouslySetInnerHTML
+ * en el body. El contenido es estático y seguro (solo metadatos de la app).
+ */
 
 export const metadata: Metadata = {
   title: 'Iniciar sesión',
@@ -72,10 +78,12 @@ function LoginContent() {
           <PasswordRecovery />
         </div>
       </div>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </Head>
     </main>
   );
 }

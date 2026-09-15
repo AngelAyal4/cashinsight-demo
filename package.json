@@ -19,9 +19,10 @@
     "@tremor/react": "^3.18.7",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
+    "js-yaml": "^4.3.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.1",
-    "next": "16.3.0",
+    "next": "^16.3.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
@@ -44,6 +45,6 @@
     "nodemon": "^3.1.14",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }
