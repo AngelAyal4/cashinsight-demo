@@ -6,8 +6,13 @@ import {
   signSessionToken,
   verifySessionToken,
 } from '@/lib/session';
+import { DEMO_USER_ID, isDemoMode } from '@/lib/demo';
 
 export async function getSessionUserId(): Promise<string | null> {
+  if (isDemoMode()) {
+    return DEMO_USER_ID;
+  }
+
   const store = await cookies();
   const token = store.get(AUTH_COOKIE_NAME)?.value;
 

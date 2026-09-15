@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { AUTH_COOKIE_NAME, verifySessionToken } from '@/lib/session';
+import { isDemoMode } from '@/lib/demo';
 
 const PUBLIC_API_PREFIX = '/api/auth';
 
@@ -18,6 +19,25 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const sessionValid = token ? verifySessionToken(token) !== null : false;
 
+  // En modo demo, no pedir autenticación
+  if (isDemoMode()) {
+    // Redirección permanente: /presupuestos pasó a llamarse /control.
+    if (pathname === '/presupuestos' || pathname.startsWith('/presupuestos/')) {
+      return NextResponse.redirect(
+        new URL('/control', request.url),
+        301
+      );
+    }
+
+    // En demo, redirigir /login y /register al dashboard
+    if (pathname === '/login' || pathname === '/register') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    return NextResponse.next();
+  }
+
+  // Producción: flujo normal con auth
   // Redirección permanente: /presupuestos pasó a llamarse /control.
   if (pathname === '/presupuestos' || pathname.startsWith('/presupuestos/')) {
     return NextResponse.redirect(

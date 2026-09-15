@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { isDemoMode } from '@/lib/demo';
 
 const navigation = [
   { href: '/', label: 'Principal' },
@@ -111,6 +112,11 @@ export function AppHeader() {
 
   return (
     <header className="border-b-4 border-ink bg-white">
+      {isDemoMode() ? (
+        <div className="bg-ink px-4 py-1.5 text-center text-xs font-bold text-lime">
+          🎯 Modo Demo — datos ficticios para demostración
+        </div>
+      ) : null}
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex shrink-0 items-center gap-2">
           <HeaderAvatar />
