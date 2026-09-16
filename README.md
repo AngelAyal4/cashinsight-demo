@@ -1,44 +1,26 @@
 # CashinsightApp
 
-App de gestión de presupuestos personales y gastos. Next.js fullstack + MongoDB + Tailwind + Tremor.
-
 > 🚀 **Demo en vivo:** [https://cashinsight-demo.vercel.app](https://cashinsight-demo.vercel.app) — datos ficticios, sin registro
+
+## Sobre el proyecto
+
+CashinsightApp es una aplicación de finanzas personales para gestionar presupuestos, gastos y metas de ahorro a nivel mensual. Pensada para uso personal y de pareja, permite llevar el control de los límites de gasto, visualizar indicadores del mes y generar reportes históricos para entender hacia dónde va el dinero.
+
+## Funcionalidades
+
+- **Presupuesto mensual** — Ingresos, gastos fijos y variables, indicadores clave del mes al día.
+- **Control de límites** — Categorías con límites de gasto configurables y visualización de progreso.
+- **Metas de ahorro** — Creación de metas con aportes y retiros, seguimiento del progreso.
+- **Balance de pareja** — Gastos compartidos con reparto configurable, cálculo de quién le debe a quién y liquidación.
+- **Reportes mensuales** — Snapshots por mes y comparativa temporal de gastos por categoría.
+- **Modo demo** — Datos ficticios pre-cargados, sin registro, para explorar la app sin fricción.
 
 ## Stack
 
 - **Frontend:** Next.js 16 (App Router), React 19, TypeScript strict, TailwindCSS, Tremor, Recharts
 - **Backend:** Next.js API Routes, Mongoose, Zod
-- **DB:** MongoDB 7 (Docker)
-- **Auth:** JWT (httpOnly cookie) + modo demo sin auth
-
-## Desarrollo
-
-```bash
-docker compose up -d mongo    # Levantar MongoDB
-npm run dev                   # Dev server (puerto 3000)
-npm run build                 # Build producción
-npm run lint                  # ESLint
-npm run test                  # Vitest
-```
-
-## Variables de entorno
-
-Copiar `.env.example` a `.env` y configurar:
-
-```bash
-MONGODB_URI=mongodb://localhost:27017/cashinsightapp
-JWT_SECRET=$(openssl rand -base64 32)
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-## Modo demo
-
-Para deploys públicos (ej: recruiters), setear `NEXT_PUBLIC_DEMO_MODE=true`. Esto desactiva la autenticación y usa un usuario demo con datos de ejemplo.
-
-## Deploy
-
-- **Vercel:** Conectar el repo en [vercel.com](https://vercel.com). Requiere email verificado (usar noreply de GitHub).
-- **Docker:** `docker compose up -d` levanta app + MongoDB + tunnel cloudflared.
+- **DB:** MongoDB 7
+- **Auth:** JWT (httpOnly cookie)
 
 ## Estructura
 
