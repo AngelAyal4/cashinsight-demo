@@ -2,6 +2,8 @@
 
 App de gestión de presupuestos personales y gastos. Next.js fullstack + MongoDB + Tailwind + Tremor.
 
+> 🚀 **Demo en vivo:** [https://cashinsight-demo.vercel.app](https://cashinsight-demo.vercel.app) — datos ficticios, sin registro
+
 ## Stack
 
 - **Frontend:** Next.js 16 (App Router), React 19, TypeScript strict, TailwindCSS, Tremor, Recharts
