@@ -23,7 +23,7 @@ const movementLabels: Record<TransactionKind, string> = {
 
 const paidByLabels: Record<PaidBy, string> = isDemoMode()
   ? {
-      yo: 'yo',
+      yo: 'vos',
       pareja: 'pareja',
       compartido: 'compartido',
     }

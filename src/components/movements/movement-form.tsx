@@ -24,7 +24,7 @@ const movementLabels: Record<TransactionKind, string> = {
 
 const paidByOptions: { value: PaidBy; label: string }[] = isDemoMode()
   ? [
-      { value: 'yo', label: 'yo' },
+      { value: 'yo', label: 'vos' },
       { value: 'pareja', label: 'pareja' },
       { value: 'compartido', label: 'Compartido' },
     ]
@@ -36,7 +36,7 @@ const paidByOptions: { value: PaidBy; label: string }[] = isDemoMode()
 
 const settlementOptions: { value: 'yo' | 'pareja'; label: string }[] = isDemoMode()
   ? [
-      { value: 'yo', label: 'yo' },
+      { value: 'yo', label: 'vos' },
       { value: 'pareja', label: 'pareja' },
     ]
   : [
